@@ -3,8 +3,8 @@ from app.services.llm_service import LLMService
 from app.config import MODEL_DIR
 from app.utils.llm_prompts import PROMPT_FOR_PRECRIBED_ANTIBIOTICS, PROMPT_FOR_ANTIBIOTIC_HISTORY, PROMPT_FOR_SUMMARY
 
-def annotate_antibiotic_guideline(name: str, creatinine: float = 1.0) -> dict:
-    """Attaches IDSA/EAU/CLSI guideline metadata and renal adjustments."""
+def annotate_antibiotic_guideline(name: str, creatinine: float = 1.0, crcl: float = 80.0) -> dict:
+    """Attaches IDSA/EAU/CLSI guideline metadata and Cockcroft-Gault renal titration."""
     name_clean = name.strip()
     name_lower = name_clean.lower()
 
@@ -27,15 +27,23 @@ def annotate_antibiotic_guideline(name: str, creatinine: float = 1.0) -> dict:
         guideline = "CLSI M100 Susceptibility Standard"
         tier = "Tier 2: Targeted Pathogen-Directed"
 
-    if creatinine > 1.2:
-        if any(k in name_lower for k in ["amikacin", "gentamicin", "colistin"]):
-            renal_status = "Renal Alert: Contraindicated or Trough Monitored (Creatinine > 1.2)"
-        elif "nitrofurantoin" in name_lower:
-            renal_status = "Renal Warning: Ineffective if eGFR < 30 mL/min"
+    # Cockcroft-Gault based renal dosing status
+    if crcl < 30 or creatinine > 2.0:
+        if "nitrofurantoin" in name_lower:
+            renal_status = f"Renal Alert: Contraindicated (eCrCl {crcl:.1f} < 30 mL/min; inadequate urinary levels & neurotoxicity hazard)"
+        elif any(k in name_lower for k in ["amikacin", "gentamicin", "colistin"]):
+            renal_status = f"Renal Alert: High Nephrotoxicity Risk (eCrCl {crcl:.1f} < 30 mL/min; avoid or mandate peak/trough monitoring)"
         else:
-            renal_status = "Renal Adjusted: Dose reduced per clearance"
+            renal_status = f"Renal Adjusted: Severe dose reduction / interval extended (eCrCl {crcl:.1f} mL/min)"
+    elif crcl < 60 or creatinine > 1.2:
+        if any(k in name_lower for k in ["amikacin", "gentamicin"]):
+            renal_status = f"Renal Monitored: Dose interval extended (eCrCl {crcl:.1f} mL/min)"
+        elif "nitrofurantoin" in name_lower:
+            renal_status = f"Renal Caution: Moderate filtration impairment (eCrCl {crcl:.1f} mL/min)"
+        else:
+            renal_status = f"Renal Adjusted: Dose reduced per Cockcroft-Gault clearance (eCrCl {crcl:.1f} mL/min)"
     else:
-        renal_status = "Standard Renal Clearance: Standard Regimen"
+        renal_status = f"Standard Clearance: Preserved eCrCl ({crcl:.1f} mL/min)"
 
     return {
         "guideline_badge": guideline,
@@ -83,7 +91,12 @@ class UTIService:
             "predicted_sensitive_antibiotics": reconciled_sensitive,
             "resistant_probabilities": item.get("resistant_probabilities", {}),
             "sensitive_probabilities": item.get("sensitive_probabilities", {}),
-            "explainability_factors": item.get("explainability_factors", [])
+            "explainability_factors": item.get("explainability_factors", []),
+            "estimated_crcl": item.get("estimated_crcl", 80.0),
+            "ckd_stage": item.get("ckd_stage", "Normal Renal Clearance"),
+            "sirs_sepsis_risk": item.get("sirs_sepsis_risk", "Low Risk"),
+            "nlr_ratio": item.get("nlr_ratio", 2.5),
+            "pyuria_index": item.get("pyuria_index", 2.0)
         }
 
     def get_precribed_antibiotics(self, patient_data: dict, predictions: dict) -> dict:
@@ -94,17 +107,19 @@ class UTIService:
         }
         res = self.llm_service.invoke_llm(system_prompt, user_prompt)
         
-        # Determine patient serum creatinine for renal annotation
+        # Determine patient serum creatinine and estimated CrCl
         creat = patient_data.get("rft_serum_creatinine", 1.0)
         try:
             creat_val = float(creat) if creat is not None and str(creat).strip() != '' else 1.0
         except (ValueError, TypeError):
             creat_val = 1.0
 
+        crcl_val = float(predictions.get("estimated_crcl", 80.0) or 80.0)
+
         if isinstance(res, dict) and "recommended" in res and isinstance(res["recommended"], list):
             for drug in res["recommended"]:
                 if isinstance(drug, dict) and "name" in drug:
-                    annotations = annotate_antibiotic_guideline(drug["name"], creat_val)
+                    annotations = annotate_antibiotic_guideline(drug["name"], creat_val, crcl_val)
                     drug.setdefault("guideline_badge", annotations["guideline_badge"])
                     drug.setdefault("renal_dose_status", annotations["renal_dose_status"])
                     drug.setdefault("safety_tier", annotations["safety_tier"])
@@ -113,7 +128,7 @@ class UTIService:
         # Fallback structure if malformed
         fallback_list = []
         for abx in predictions.get("predicted_sensitive_antibiotics", ["Cefepime"])[:3]:
-            annotations = annotate_antibiotic_guideline(abx, creat_val)
+            annotations = annotate_antibiotic_guideline(abx, creat_val, crcl_val)
             fallback_list.append({
                 "name": abx,
                 "dosage": "Standard renal-adjusted clinical dose",

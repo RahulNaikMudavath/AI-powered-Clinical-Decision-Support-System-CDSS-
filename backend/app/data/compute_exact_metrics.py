@@ -26,10 +26,36 @@ def main():
     df = pd.read_csv(data_path)
     total_records = len(df)
 
-    numeric_features = [
+    base_numeric_features = [
         'AGE', 'CBP_LYMPHOCYTES', 'WBC', 'POLYMORPHS', 'CRP',
         'RFT_SERUM_CREATININE', 'SERUM_URIC_ACID', 'BLOOD_UREA',
         'CUE_PUS_CELLS', 'EPITHELIAL_CELLS', 'RBC'
+    ]
+
+    for col in base_numeric_features:
+        df[col] = pd.to_numeric(df[col], errors='coerce')
+
+    # Clinical Biomarker Engineering
+    df['NLR'] = df['POLYMORPHS'] / (df['CBP_LYMPHOCYTES'] + 0.1)
+    df['ANC'] = (df['WBC'] * df['POLYMORPHS']) / 100.0
+    df['ALC'] = (df['WBC'] * df['CBP_LYMPHOCYTES']) / 100.0
+    df['PYURIA_RATIO'] = df['CUE_PUS_CELLS'] / (df['EPITHELIAL_CELLS'] + 0.1)
+    df['UREA_CREAT_RATIO'] = df['BLOOD_UREA'] / (df['RFT_SERUM_CREATININE'] + 0.01)
+    df['SII'] = (df['WBC'] * df['CRP']) / 1000.0
+    df['IS_SEVERE'] = ((df['WBC'] > 12000) & (df['CRP'] > 20)).astype(int)
+    df['IS_RENAL_IMP'] = (df['RFT_SERUM_CREATININE'] > 1.3).astype(int)
+
+    gender_is_female = df['GENDER'].astype(str).str.lower().str.startswith('f')
+    weights = np.where(gender_is_female, 60.0, 70.0)
+    sex_factor = np.where(gender_is_female, 0.85, 1.0)
+    age_clean = df['AGE'].fillna(50)
+    creat_clean = df['RFT_SERUM_CREATININE'].fillna(1.0).clip(lower=0.2)
+    crcl = ((140.0 - age_clean) * weights * sex_factor) / (72.0 * creat_clean)
+    df['ESTIMATED_CRCL'] = np.clip(crcl, 5.0, 200.0)
+
+    numeric_features = base_numeric_features + [
+        'NLR', 'ANC', 'ALC', 'PYURIA_RATIO', 'UREA_CREAT_RATIO',
+        'SII', 'IS_SEVERE', 'IS_RENAL_IMP', 'ESTIMATED_CRCL'
     ]
     categorical_features = [
         'GENDER', 'DEPARTMENT',

@@ -51,6 +51,11 @@ class Predictions(BaseModel):
     resistant_probabilities: Optional[Dict[str, float]] = None
     sensitive_probabilities: Optional[Dict[str, float]] = None
     explainability_factors: Optional[List[ExplainabilityFactor]] = None
+    estimated_crcl: Optional[float] = None
+    ckd_stage: Optional[str] = None
+    sirs_sepsis_risk: Optional[str] = None
+    nlr_ratio: Optional[float] = None
+    pyuria_index: Optional[float] = None
 
 class AntibioticRecommendation(BaseModel):
     name: str

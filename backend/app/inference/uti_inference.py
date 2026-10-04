@@ -64,14 +64,35 @@ class BacteriaInferenceEngine:
         df.columns = df.columns.str.strip().str.upper()
         
         # Numeric Type Casting
-        numeric_cols = [
+        base_numeric = [
             'AGE', 'CBP_LYMPHOCYTES', 'WBC', 'POLYMORPHS', 'CRP', 
             'RFT_SERUM_CREATININE', 'SERUM_URIC_ACID', 'BLOOD_UREA', 
             'CUE_PUS_CELLS', 'EPITHELIAL_CELLS', 'RBC'
         ]
-        for col in numeric_cols:
+        for col in base_numeric:
             if col in df.columns:
-                df[col] = pd.to_numeric(df[col], errors='coerce')
+                df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0.0)
+            else:
+                df[col] = 0.0
+
+        # Clinical Biomarker Engineering
+        df['NLR'] = df['POLYMORPHS'] / (df['CBP_LYMPHOCYTES'] + 0.1)
+        df['ANC'] = (df['WBC'] * df['POLYMORPHS']) / 100.0
+        df['ALC'] = (df['WBC'] * df['CBP_LYMPHOCYTES']) / 100.0
+        df['PYURIA_RATIO'] = df['CUE_PUS_CELLS'] / (df['EPITHELIAL_CELLS'] + 0.1)
+        df['UREA_CREAT_RATIO'] = df['BLOOD_UREA'] / (df['RFT_SERUM_CREATININE'] + 0.01)
+        df['SII'] = (df['WBC'] * df['CRP']) / 1000.0
+        df['IS_SEVERE'] = ((df['WBC'] > 12000) & (df['CRP'] > 20)).astype(int)
+        df['IS_RENAL_IMP'] = (df['RFT_SERUM_CREATININE'] > 1.3).astype(int)
+
+        gender_col = df['GENDER'].astype(str).str.lower() if 'GENDER' in df.columns else pd.Series(['male'] * len(df))
+        gender_is_female = gender_col.str.startswith('f')
+        weights = np.where(gender_is_female, 60.0, 70.0)
+        sex_factor = np.where(gender_is_female, 0.85, 1.0)
+        age_clean = df['AGE'].fillna(50)
+        creat_clean = df['RFT_SERUM_CREATININE'].fillna(1.0).clip(lower=0.2)
+        crcl = ((140.0 - age_clean) * weights * sex_factor) / (72.0 * creat_clean)
+        df['ESTIMATED_CRCL'] = np.clip(crcl, 5.0, 200.0)
 
         # Multi-Label expansion for Previous Antibiotics
         if 'PREVIOUS_ANTIBIOTIC_USED' in df.columns:
@@ -93,7 +114,34 @@ class BacteriaInferenceEngine:
         """Generates patient-specific local feature attribution factors."""
         factors = []
 
-        # 1. CUE Pus Cells (Pyuria)
+        # 1. Estimated Creatinine Clearance (Cockcroft-Gault)
+        age = float(row.get('AGE', row.get('age', 50)) or 50)
+        gender = str(row.get('GENDER', row.get('gender', 'Male'))).lower()
+        creat = float(row.get('RFT_SERUM_CREATININE', row.get('rft_serum_creatinine', 1.0)) or 1.0)
+        creat_safe = max(creat, 0.2)
+        is_female = gender.startswith('f')
+        wt = 60.0 if is_female else 70.0
+        factor_sex = 0.85 if is_female else 1.0
+        crcl_val = round(((140.0 - age) * wt * factor_sex) / (72.0 * creat_safe), 1)
+
+        if crcl_val < 30:
+            crcl_impact = "Stage 4 Renal Clearance Risk"
+            crcl_rationale = f"Cockcroft-Gault CrCl is {crcl_val} mL/min (<30 mL/min). Nitrofurantoin contraindicated; beta-lactam interval must be extended (q24h)."
+        elif crcl_val < 60:
+            crcl_impact = "Stage 3 Moderate Renal Reduction"
+            crcl_rationale = f"Cockcroft-Gault CrCl is {crcl_val} mL/min (30-59 mL/min). Requires renal dosage titration per CLSI guidelines."
+        else:
+            crcl_impact = "Normal Renal Clearance"
+            crcl_rationale = f"Cockcroft-Gault CrCl is {crcl_val} mL/min (preserved clearance). Standard therapeutic dosing permitted."
+
+        factors.append({
+            "feature": "Estimated CrCl (Cockcroft-Gault)",
+            "value": f"{crcl_val} mL/min",
+            "impact": crcl_impact,
+            "clinical_rationale": crcl_rationale
+        })
+
+        # 2. CUE Pus Cells (Pyuria)
         pus = row.get('CUE_PUS_CELLS', row.get('cue_pus_cells', 0))
         try:
             pus_val = float(pus) if pus is not None and str(pus).strip() != '' else 0.0
@@ -114,28 +162,26 @@ class BacteriaInferenceEngine:
                 "clinical_rationale": "Pus cell count within borderline range; microbial suspicion guided by clinical symptoms and urine sediment."
             })
 
-        # 2. Serum Creatinine (Renal Status)
-        creat = row.get('RFT_SERUM_CREATININE', row.get('rft_serum_creatinine', 1.0))
-        try:
-            creat_val = float(creat) if creat is not None and str(creat).strip() != '' else 1.0
-        except (ValueError, TypeError):
-            creat_val = 1.0
-        if creat_val > 1.2:
+        # 3. Neutrophil-to-Lymphocyte Ratio (NLR)
+        poly = float(row.get('POLYMORPHS', row.get('polymorphs', 65)) or 65)
+        lymph = float(row.get('CBP_LYMPHOCYTES', row.get('cbp_lymphocytes', 25)) or 25)
+        nlr_val = round(poly / (lymph + 0.1), 2)
+        if nlr_val > 4.0:
             factors.append({
-                "feature": "Serum Creatinine",
-                "value": f"{creat_val:g} mg/dL",
-                "impact": "Renal Clearance Warning",
-                "clinical_rationale": f"Elevated creatinine ({creat_val:g} mg/dL) indicates renal compromise; contraindicated or adjusted aminoglycosides/colistin."
+                "feature": "Neutrophil-to-Lymphocyte Ratio (NLR)",
+                "value": f"{nlr_val}",
+                "impact": "Systemic Inflammatory Activation",
+                "clinical_rationale": f"Markedly elevated NLR ({nlr_val} > 4.0) indicates severe neutrophil demargination and systemic inflammatory response syndrome."
             })
         else:
             factors.append({
-                "feature": "Serum Creatinine",
-                "value": f"{creat_val:g} mg/dL",
-                "impact": "Normal Renal Function",
-                "clinical_rationale": "Renal clearance is preserved (<1.2 mg/dL), enabling standard guideline therapeutic dosing."
+                "feature": "Neutrophil-to-Lymphocyte Ratio (NLR)",
+                "value": f"{nlr_val}",
+                "impact": "Baseline Inflammatory Index",
+                "clinical_rationale": f"NLR ({nlr_val}) reflects localized urothelial inflammation without severe systemic granulocytic left shift."
             })
 
-        # 3. Prior Antibiotic Exposure
+        # 4. Prior Antibiotic Exposure
         prev_abx = str(row.get('PREVIOUS_ANTIBIOTIC_USED', row.get('previous_antibiotic_used', ''))).strip()
         if prev_abx and prev_abx.lower() not in ['none', 'nil', 'nan', '']:
             matched_res = [d for d in resistant_drugs if d.lower() in prev_abx.lower() or prev_abx.lower() in d.lower()]
@@ -147,7 +193,7 @@ class BacteriaInferenceEngine:
                 "clinical_rationale": f"Prior use of {prev_abx} exerts selective antimicrobial pressure.{rationale_suffix}"
             })
 
-        # 4. Total WBC Count (Systemic Infection)
+        # 5. Total WBC Count (Systemic Infection)
         wbc = row.get('WBC', row.get('wbc', 8000))
         try:
             wbc_val = float(wbc) if wbc is not None and str(wbc).strip() != '' else 8000.0
@@ -161,7 +207,7 @@ class BacteriaInferenceEngine:
                 "clinical_rationale": f"Leukocytosis ({wbc_val:,.0f}/mcL) indicates systemic inflammatory activation consistent with complicated/pyelonephritic UTI."
             })
 
-        # 5. CRP (Acute Phase Reactant)
+        # 6. CRP (Acute Phase Reactant)
         crp = row.get('CRP', row.get('crp', 5.0))
         try:
             crp_val = float(crp) if crp is not None and str(crp).strip() != '' else 5.0
@@ -175,7 +221,7 @@ class BacteriaInferenceEngine:
                 "clinical_rationale": f"Significantly elevated CRP ({crp_val:g} mg/L > 10) confirms acute parenchymal/tissue involvement."
             })
 
-        # 6. Comorbidities / Risk Factors
+        # 7. Comorbidities / Risk Factors
         comorb = str(row.get('COMORBIDITIES', row.get('comorbidities', ''))).strip()
         risks = str(row.get('RISKFACTORS', row.get('riskfactors', ''))).strip()
         combined_risks = "; ".join([s for s in [comorb, risks] if s and s.lower() not in ['none', 'nil', 'nan']])
@@ -273,6 +319,26 @@ class BacteriaInferenceEngine:
             row_data = input_df.iloc[i].to_dict() if hasattr(input_df, 'iloc') else dict(input_df)
             explainability = self._compute_explainability(row_data, type_labels[i], resistant_list)
 
+            # Clinical Risk Stratification
+            crcl_val = round(float(X_processed['ESTIMATED_CRCL'].iloc[i]), 1)
+            if crcl_val < 15:
+                ckd_stage = "Stage 5 Kidney Failure (<15 mL/min)"
+            elif crcl_val < 30:
+                ckd_stage = "Stage 4 Severe Reduction (15-29 mL/min)"
+            elif crcl_val < 60:
+                ckd_stage = "Stage 3 Moderate Reduction (30-59 mL/min)"
+            elif crcl_val < 90:
+                ckd_stage = "Stage 2 Mild Reduction (60-89 mL/min)"
+            else:
+                ckd_stage = "Stage 1 Preserved Clearance (>=90 mL/min)"
+
+            if int(X_processed['IS_SEVERE'].iloc[i]) == 1:
+                sepsis_risk = "High Risk (Severe Systemic Inflammatory Activation / Impending Sepsis)"
+            elif float(X_processed['WBC'].iloc[i]) > 10000 or float(X_processed['CRP'].iloc[i]) > 10:
+                sepsis_risk = "Moderate Risk (Invasive Parenchymal / Systemic Marker Elevation)"
+            else:
+                sepsis_risk = "Low Risk (Uncomplicated / Hemodynamically Stable Baseline)"
+
             results.append({
                 "patient_index": i,
                 "bacteria_type_prediction": type_labels[i],
@@ -283,7 +349,12 @@ class BacteriaInferenceEngine:
                 "predicted_sensitive_antibiotics": sensitive_list,
                 "resistant_probabilities": res_probs,
                 "sensitive_probabilities": sens_probs,
-                "explainability_factors": explainability
+                "explainability_factors": explainability,
+                "estimated_crcl": crcl_val,
+                "ckd_stage": ckd_stage,
+                "sirs_sepsis_risk": sepsis_risk,
+                "nlr_ratio": round(float(X_processed['NLR'].iloc[i]), 2),
+                "pyuria_index": round(float(X_processed['PYURIA_RATIO'].iloc[i]), 2)
             })
         return results
 

@@ -14,25 +14,25 @@
     "class_weight": "balanced",
     "cross_validation": {
       "method": "Stratified 5-Fold Cross Validation",
-      "mean_accuracy": 76.75,
-      "std_accuracy": 2.63,
-      "mean_weighted_f1": 0.7846,
+      "mean_accuracy": 79.89,
+      "std_accuracy": 2.73,
+      "mean_weighted_f1": 0.8016,
       "fold_accuracies_percent": [
-        77.98,
+        82.57,
         78.9,
-        74.07,
-        73.15,
-        79.63
+        75.93,
+        78.7,
+        83.33
       ]
     },
     "holdout_test_split_20pct": {
       "test_samples": 109,
-      "accuracy": 88.99,
-      "balanced_accuracy": 93.33,
-      "weighted_f1": 0.8992,
-      "macro_f1": 0.8443,
-      "weighted_precision": 0.9325,
-      "weighted_recall": 0.8899
+      "accuracy": 89.91,
+      "balanced_accuracy": 93.89,
+      "weighted_f1": 0.9071,
+      "macro_f1": 0.8552,
+      "weighted_precision": 0.9361,
+      "weighted_recall": 0.8991
     }
   },
   "model_2_resistance": {
@@ -83,16 +83,16 @@
     ],
     "holdout_test_split_20pct": {
       "test_samples": 132,
-      "label_accuracy": 97.75,
-      "micro_f1": 0.8763,
-      "macro_f1": 0.7615,
-      "hamming_loss": 0.0225
+      "label_accuracy": 97.89,
+      "micro_f1": 0.8839,
+      "macro_f1": 0.7583,
+      "hamming_loss": 0.0211
     },
     "full_dataset_fit": {
-      "label_accuracy": 97.51,
-      "micro_f1": 0.8539,
-      "macro_f1": 0.9006,
-      "hamming_loss": 0.0249
+      "label_accuracy": 97.71,
+      "micro_f1": 0.8643,
+      "macro_f1": 0.9029,
+      "hamming_loss": 0.0229
     }
   },
   "model_3_susceptibility": {
@@ -140,16 +140,16 @@
     ],
     "holdout_test_split_20pct": {
       "test_samples": 132,
-      "label_accuracy": 98.33,
-      "micro_f1": 0.865,
-      "macro_f1": 0.8974,
-      "hamming_loss": 0.0167
+      "label_accuracy": 98.48,
+      "micro_f1": 0.8758,
+      "macro_f1": 0.9006,
+      "hamming_loss": 0.0152
     },
     "full_dataset_fit": {
-      "label_accuracy": 98.35,
-      "micro_f1": 0.8622,
-      "macro_f1": 0.9087,
-      "hamming_loss": 0.0165
+      "label_accuracy": 98.45,
+      "micro_f1": 0.87,
+      "macro_f1": 0.9091,
+      "hamming_loss": 0.0155
     }
   },
   "safety_guardrails": {

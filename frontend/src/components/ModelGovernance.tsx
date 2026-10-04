@@ -14,16 +14,18 @@ import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGri
 import modelMetrics from "@/data/model_metrics.json";
 
 const FEATURE_IMPORTANCES = [
-  { feature: "Serum Creatinine", importance: 0.165, category: "Renal Function" },
-  { feature: "CUE Pus Cells (/hpf)", importance: 0.142, category: "Urinalysis" },
-  { feature: "Prior Fluoroquinolone Use", importance: 0.128, category: "Medication History" },
-  { feature: "Patient Age", importance: 0.115, category: "Demographics" },
-  { feature: "Total WBC Count", importance: 0.098, category: "Hematology" },
-  { feature: "Polymorphs %", importance: 0.089, category: "Hematology" },
-  { feature: "Dipstick Proteinuria", importance: 0.076, category: "Urinalysis" },
-  { feature: "C-Reactive Protein (CRP)", importance: 0.072, category: "Inflammation" },
-  { feature: "Blood Urea Nitrogen", importance: 0.061, category: "Renal Function" },
-  { feature: "Urine RBC Count", importance: 0.054, category: "Urinalysis" }
+  { feature: "Serum Creatinine", importance: 0.0341, category: "Renal Function" },
+  { feature: "Estimated CrCl (Cockcroft-Gault)", importance: 0.0331, category: "Renal Clearance" },
+  { feature: "Blood Urea", importance: 0.0309, category: "Renal Function" },
+  { feature: "Serum Uric Acid", importance: 0.0299, category: "Renal / Metabolic" },
+  { feature: "Urea / Creatinine Ratio", importance: 0.0249, category: "Renal Ratio" },
+  { feature: "Total WBC Count", importance: 0.0215, category: "Hematology" },
+  { feature: "Patient Age", importance: 0.0194, category: "Demographics" },
+  { feature: "C-Reactive Protein (CRP)", importance: 0.0115, category: "Inflammation" },
+  { feature: "CBP Lymphocytes %", importance: 0.0112, category: "Hematology" },
+  { feature: "Absolute Neutrophil Count (ANC)", importance: 0.0107, category: "Hematology" },
+  { feature: "Absolute Lymphocyte Count (ALC)", importance: 0.0092, category: "Hematology" },
+  { feature: "CUE Pus Cells (/hpf)", importance: 0.0088, category: "Urinalysis" }
 ];
 
 const ModelGovernance = () => {
@@ -224,10 +226,10 @@ const ModelGovernance = () => {
               margin={{ top: 5, right: 30, left: 100, bottom: 5 }}
             >
               <CartesianGrid strokeDasharray="3 3" horizontal={false} opacity={0.15} />
-              <XAxis type="number" domain={[0, 0.2]} tickFormatter={(v) => `${(v * 100).toFixed(0)}%`} tick={{ fontSize: 11 }} />
-              <YAxis type="category" dataKey="feature" tick={{ fontSize: 11 }} width={120} />
+              <XAxis type="number" domain={[0, 0.04]} tickFormatter={(v) => `${(v * 100).toFixed(1)}%`} tick={{ fontSize: 11 }} />
+              <YAxis type="category" dataKey="feature" tick={{ fontSize: 11 }} width={160} />
               <Tooltip 
-                formatter={(value: any) => [`${(Number(value) * 100).toFixed(1)}%`, 'Relative Weight']}
+                formatter={(value: any) => [`${(Number(value) * 100).toFixed(2)}%`, 'Relative Weight']}
                 contentStyle={{ 
                   backgroundColor: 'hsl(var(--card))', 
                   borderColor: 'hsl(var(--border))', 
@@ -237,7 +239,7 @@ const ModelGovernance = () => {
               />
               <Bar dataKey="importance" fill="#0d9488" radius={[0, 4, 4, 0]}>
                 {FEATURE_IMPORTANCES.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={index < 3 ? '#059669' : '#0284c7'} />
+                  <Cell key={`cell-${index}`} fill={index < 3 ? '#059669' : index < 6 ? '#0284c7' : '#6366f1'} />
                 ))}
               </Bar>
             </BarChart>
