@@ -23,6 +23,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import PetriDishVisualizer from "./PetriDishVisualizer";
 
 export interface PrescribedRecommendation {
   name: string;
@@ -365,6 +366,14 @@ ${results.summary}
               </p>
             </div>
           </div>
+
+          {/* Interactive Microbial AST Culture Simulation */}
+          <PetriDishVisualizer
+            bacteriaType={results.predictions.bacteria_type_prediction}
+            sensitiveAntibiotics={results.predictions.predicted_sensitive_antibiotics}
+            resistantAntibiotics={results.predictions.predicted_resistant_antibiotics}
+            creatinine={results.patient_details.lab_results.rft_serum_creatinine}
+          />
 
           {/* Recommended Regimens Detail Cards */}
           <div>
