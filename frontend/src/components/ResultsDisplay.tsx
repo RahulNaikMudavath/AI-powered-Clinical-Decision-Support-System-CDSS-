@@ -15,6 +15,10 @@ import {
   Info,
   ChevronDown,
   ChevronUp,
+  Printer,
+  Copy,
+  Check,
+  Sparkles
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -93,6 +97,7 @@ interface ChatMessage {
 
 const ResultsDisplay = ({ results, onReset, apiUrl = "http://localhost:8000" }: ResultsDisplayProps) => {
   const [expandedDrug, setExpandedDrug] = useState<string | null>(null);
+  const [copiedConsult, setCopiedConsult] = useState(false);
 
   // Chatbot State
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -104,6 +109,40 @@ const ResultsDisplay = ({ results, onReset, apiUrl = "http://localhost:8000" }: 
   ]);
   const [chatInput, setChatInput] = useState("");
   const [isSendingChat, setIsSendingChat] = useState(false);
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const handleCopyConsultNote = () => {
+    const text = `CLINICAL UTI ASSESSMENT & ANTIMICROBIAL STEWARDSHIP REPORT
+Patient: ${results.patient_details.age}yo ${results.patient_details.gender} | Department: ${results.patient_details.department}
+Diagnosis: ${results.patient_details.diagnosis} | Classification: ${results.patient_details.classification_of_uti}
+Key Labs: WBC ${results.patient_details.lab_results.wbc} | Creatinine ${results.patient_details.lab_results.rft_serum_creatinine} mg/dL | Pus Cells ${results.patient_details.lab_results.cue_pus_cells}/hpf | Proteins ${results.patient_details.lab_results.proteins}
+
+PREDICTED PATHOGEN TAXONOMY:
+${results.predictions.bacteria_type_prediction}
+
+RESISTANT ANTIMICROBIALS:
+${results.predictions.predicted_resistant_antibiotics.join(", ") || "None identified"}
+
+SUSCEPTIBLE CANDIDATE AGENTS:
+${results.predictions.predicted_sensitive_antibiotics.join(", ")}
+
+RECOMMENDED ANTIMICROBIAL REGIMEN:
+${results.prescribed_antibiotics.recommended.map((r, i) => `${i + 1}. ${r.name} - ${r.dosage}\n   Precautions: ${r.precautions}\n   Rationale: ${r.explanation}`).join("\n\n")}
+
+CLINICAL SUMMARY & MANAGEMENT:
+${results.summary}
+`;
+    navigator.clipboard.writeText(text);
+    setCopiedConsult(true);
+    setTimeout(() => setCopiedConsult(false), 2500);
+  };
+
+  const sendSuggestedQuestion = (q: string) => {
+    setChatInput(q);
+  };
 
   const toggleDrugDetails = (name: string) => {
     setExpandedDrug((prev) => (prev === name ? null : name));
@@ -190,10 +229,34 @@ const ResultsDisplay = ({ results, onReset, apiUrl = "http://localhost:8000" }: 
                 Diagnostic & Pharmacotherapeutic Profile
               </h2>
             </div>
-            <Button onClick={onReset} variant="outline" className="gap-2">
-              <RefreshCw className="h-4 w-4" />
-              Assess Another Patient
-            </Button>
+            <div className="flex flex-wrap items-center gap-2.5">
+              <Button
+                onClick={handleCopyConsultNote}
+                variant="outline"
+                size="sm"
+                className="gap-2 border-primary/30 hover:bg-primary/10 text-xs"
+              >
+                {copiedConsult ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4 text-primary" />}
+                <span>{copiedConsult ? "Consult Copied!" : "Copy Consult Note"}</span>
+              </Button>
+              <Button
+                onClick={handlePrint}
+                variant="outline"
+                size="sm"
+                className="gap-2 border-border hover:bg-muted text-xs"
+              >
+                <Printer className="h-4 w-4 text-muted-foreground" />
+                <span>Print / PDF Report</span>
+              </Button>
+              <Button
+                onClick={onReset}
+                size="sm"
+                className="gap-2 gradient-primary text-primary-foreground shadow-sm text-xs"
+              >
+                <RefreshCw className="h-4 w-4" />
+                <span>Assess Another Patient</span>
+              </Button>
+            </div>
           </div>
 
           {/* Top Grid: Pathogen & Susceptibility Summary */}
@@ -463,7 +526,32 @@ const ResultsDisplay = ({ results, onReset, apiUrl = "http://localhost:8000" }: 
               </div>
 
               {/* Chat Input Bar */}
-              <div className="border-t border-border p-3 bg-background">
+              <div className="border-t border-border p-3 bg-background space-y-2">
+                {/* Quick Suggestion Chips */}
+                <div className="flex flex-wrap gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => sendSuggestedQuestion(`How does Creatinine ${results.patient_details.lab_results.rft_serum_creatinine} mg/dL impact this regimen?`)}
+                    className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors"
+                  >
+                    Adjust for Cr {results.patient_details.lab_results.rft_serum_creatinine} mg/dL
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => sendSuggestedQuestion("What are safe oral step-down switch options for discharge?")}
+                    className="text-[10px] px-2 py-0.5 rounded-full bg-secondary/10 text-secondary border border-secondary/20 hover:bg-secondary/20 transition-colors"
+                  >
+                    Oral step-down options
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => sendSuggestedQuestion(`Explain mechanism for resistance to ${results.predictions.predicted_resistant_antibiotics[0] || "fluoroquinolones"}`)}
+                    className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground border border-border hover:bg-muted/80 transition-colors"
+                  >
+                    Explain resistance mechanism
+                  </button>
+                </div>
+
                 <form
                   onSubmit={(e) => {
                     e.preventDefault();

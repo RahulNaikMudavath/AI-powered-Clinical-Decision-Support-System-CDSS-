@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,52 +6,52 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 210 20% 15%;
+    --background: 210 30% 98%;
+    --foreground: 220 25% 12%;
 
     --card: 0 0% 100%;
-    --card-foreground: 210 20% 15%;
+    --card-foreground: 220 25% 12%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 210 20% 15%;
+    --popover-foreground: 220 25% 12%;
 
-    --primary: 152 70% 40%;
+    --primary: 158 75% 38%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 100% 52%;
+    --secondary: 199 89% 48%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 210 20% 96%;
-    --muted-foreground: 210 15% 45%;
+    --muted: 215 25% 94%;
+    --muted-foreground: 215 16% 47%;
 
-    --accent: 152 60% 95%;
-    --accent-foreground: 152 70% 30%;
+    --accent: 158 65% 94%;
+    --accent-foreground: 158 85% 26%;
 
-    --destructive: 0 72% 51%;
+    --destructive: 350 89% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 152 70% 40%;
+    --success: 158 75% 38%;
     --success-foreground: 0 0% 100%;
 
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
 
-    --info: 210 100% 52%;
+    --info: 199 89% 48%;
     --info-foreground: 0 0% 100%;
 
-    --border: 210 20% 90%;
-    --input: 210 20% 90%;
-    --ring: 152 70% 40%;
+    --border: 214 28% 90%;
+    --input: 214 28% 90%;
+    --ring: 158 75% 38%;
 
-    --radius: 0.75rem;
+    --radius: 0.85rem;
 
-    --gradient-primary: linear-gradient(135deg, hsl(152 70% 40%) 0%, hsl(180 60% 45%) 100%);
-    --gradient-secondary: linear-gradient(135deg, hsl(210 100% 52%) 0%, hsl(220 90% 60%) 100%);
-    --gradient-hero: linear-gradient(180deg, hsl(152 60% 97%) 0%, hsl(210 60% 98%) 50%, hsl(0 0% 100%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(158 75% 38%) 0%, hsl(186 85% 40%) 100%);
+    --gradient-secondary: linear-gradient(135deg, hsl(199 89% 48%) 0%, hsl(221 83% 53%) 100%);
+    --gradient-hero: radial-gradient(circle at 50% 0%, hsl(158 60% 94% / 0.7) 0%, hsl(199 70% 96% / 0.5) 45%, hsl(210 30% 98%) 100%);
     
-    --shadow-card: 0 4px 20px -4px hsl(210 20% 15% / 0.08);
-    --shadow-elevated: 0 8px 30px -8px hsl(210 20% 15% / 0.15);
-    --shadow-primary: 0 4px 20px -4px hsl(152 70% 40% / 0.35);
+    --shadow-card: 0 4px 24px -2px hsl(220 25% 12% / 0.06);
+    --shadow-elevated: 0 12px 36px -4px hsl(220 25% 12% / 0.12);
+    --shadow-primary: 0 6px 24px -4px hsl(158 75% 38% / 0.35);
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -64,59 +64,59 @@
   }
 
   .dark {
-    --background: 210 20% 8%;
-    --foreground: 210 20% 98%;
+    --background: 222 47% 8%;
+    --foreground: 210 40% 98%;
 
-    --card: 210 20% 12%;
-    --card-foreground: 210 20% 98%;
+    --card: 222 47% 11%;
+    --card-foreground: 210 40% 98%;
 
-    --popover: 210 20% 12%;
-    --popover-foreground: 210 20% 98%;
+    --popover: 222 47% 11%;
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 152 65% 45%;
+    --primary: 158 70% 45%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 90% 55%;
+    --secondary: 199 89% 52%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 210 20% 18%;
-    --muted-foreground: 210 15% 60%;
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
 
-    --accent: 152 40% 15%;
-    --accent-foreground: 152 65% 55%;
+    --accent: 158 45% 16%;
+    --accent-foreground: 158 75% 65%;
 
-    --destructive: 0 65% 45%;
+    --destructive: 350 80% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 152 65% 45%;
+    --success: 158 70% 45%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 38 85% 45%;
+    --warning: 38 85% 55%;
     --warning-foreground: 0 0% 100%;
 
-    --info: 210 90% 55%;
+    --info: 199 89% 52%;
     --info-foreground: 0 0% 100%;
 
-    --border: 210 20% 22%;
-    --input: 210 20% 22%;
-    --ring: 152 65% 45%;
+    --border: 217 33% 20%;
+    --input: 217 33% 20%;
+    --ring: 158 70% 45%;
 
-    --gradient-primary: linear-gradient(135deg, hsl(152 65% 35%) 0%, hsl(180 50% 35%) 100%);
-    --gradient-secondary: linear-gradient(135deg, hsl(210 90% 45%) 0%, hsl(220 80% 50%) 100%);
-    --gradient-hero: linear-gradient(180deg, hsl(210 20% 8%) 0%, hsl(210 20% 10%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(158 70% 40%) 0%, hsl(186 80% 42%) 100%);
+    --gradient-secondary: linear-gradient(135deg, hsl(199 89% 50%) 0%, hsl(221 83% 55%) 100%);
+    --gradient-hero: radial-gradient(circle at 50% 0%, hsl(158 50% 15% / 0.5) 0%, hsl(222 47% 11% / 0.6) 50%, hsl(222 47% 8%) 100%);
 
-    --shadow-card: 0 4px 20px -4px hsl(0 0% 0% / 0.3);
-    --shadow-elevated: 0 8px 30px -8px hsl(0 0% 0% / 0.4);
-    --shadow-primary: 0 4px 20px -4px hsl(152 65% 45% / 0.3);
+    --shadow-card: 0 4px 24px -2px hsl(0 0% 0% / 0.4);
+    --shadow-elevated: 0 12px 36px -4px hsl(0 0% 0% / 0.6);
+    --shadow-primary: 0 6px 24px -4px hsl(158 70% 45% / 0.25);
 
-    --sidebar-background: 210 20% 10%;
-    --sidebar-foreground: 210 20% 90%;
-    --sidebar-primary: 152 65% 45%;
+    --sidebar-background: 222 47% 10%;
+    --sidebar-foreground: 210 40% 90%;
+    --sidebar-primary: 158 70% 45%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 20% 15%;
-    --sidebar-accent-foreground: 210 20% 90%;
-    --sidebar-border: 210 20% 18%;
-    --sidebar-ring: 152 65% 45%;
+    --sidebar-accent: 222 47% 15%;
+    --sidebar-accent-foreground: 210 40% 90%;
+    --sidebar-border: 217 33% 18%;
+    --sidebar-ring: 158 70% 45%;
   }
 }
 
@@ -126,8 +126,13 @@
   }
 
   body {
-    @apply bg-background text-foreground font-sans antialiased;
+    @apply bg-background text-foreground font-sans antialiased selection:bg-emerald-500/20 selection:text-emerald-700 dark:selection:text-emerald-300;
     font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Outfit', 'Inter', system-ui, sans-serif;
+    letter-spacing: -0.02em;
   }
 }
 
@@ -156,57 +161,59 @@
     box-shadow: var(--shadow-primary);
   }
 
-  .animate-fade-in {
-    animation: fadeIn 0.5s ease-out forwards;
+  .glass-panel {
+    background: hsl(var(--card) / 0.75);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid hsl(var(--border) / 0.65);
   }
 
-  .animate-slide-up {
-    animation: slideUp 0.5s ease-out forwards;
+  .glass-card {
+    background: linear-gradient(135deg, hsl(var(--card) / 0.85) 0%, hsl(var(--card) / 0.65) 100%);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid hsl(var(--border) / 0.7);
   }
 
-  .animate-pulse-slow {
-    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  .medical-grid {
+    background-size: 32px 32px;
+    background-image: 
+      linear-gradient(to right, hsl(var(--border) / 0.3) 1px, transparent 1px),
+      linear-gradient(to bottom, hsl(var(--border) / 0.3) 1px, transparent 1px);
   }
 
-  .animate-spin-slow {
-    animation: spin 2s linear infinite;
+  .glow-emerald {
+    box-shadow: 0 0 35px -5px hsl(158 75% 38% / 0.3);
+  }
+
+  .glow-cyan {
+    box-shadow: 0 0 35px -5px hsl(199 89% 48% / 0.3);
+  }
+
+  .glow-rose {
+    box-shadow: 0 0 35px -5px hsl(350 89% 60% / 0.3);
   }
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
+/* Print Optimization for Hospital Clinical Consult Note */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #0f172a !important;
   }
-  to {
-    opacity: 1;
+  header, footer, .no-print, button:not(.print-include) {
+    display: none !important;
   }
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
+  .print-area {
+    display: block !important;
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
+  .glass-card, .glass-panel {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
   }
 }

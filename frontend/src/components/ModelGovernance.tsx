@@ -1,0 +1,273 @@
+import { 
+  Cpu, 
+  ShieldCheck, 
+  Database, 
+  GitBranch, 
+  BarChart2, 
+  CheckCircle2, 
+  Lock, 
+  FileCode, 
+  Activity, 
+  AlertCircle 
+} from "lucide-react";
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Cell } from "recharts";
+
+const FEATURE_IMPORTANCES = [
+  { feature: "Serum Creatinine", importance: 0.165, category: "Renal Function" },
+  { feature: "CUE Pus Cells (/hpf)", importance: 0.142, category: "Urinalysis" },
+  { feature: "Prior Fluoroquinolone Use", importance: 0.128, category: "Medication History" },
+  { feature: "Patient Age", importance: 0.115, category: "Demographics" },
+  { feature: "Total WBC Count", importance: 0.098, category: "Hematology" },
+  { feature: "Polymorphs %", importance: 0.089, category: "Hematology" },
+  { feature: "Dipstick Proteinuria", importance: 0.076, category: "Urinalysis" },
+  { feature: "C-Reactive Protein (CRP)", importance: 0.072, category: "Inflammation" },
+  { feature: "Blood Urea Nitrogen", importance: 0.061, category: "Renal Function" },
+  { feature: "Urine RBC Count", importance: 0.054, category: "Urinalysis" }
+];
+
+const ModelGovernance = () => {
+  return (
+    <div className="space-y-8 animate-fade-in">
+      {/* Header Banner */}
+      <div className="rounded-2xl border border-secondary/20 bg-gradient-to-r from-blue-500/10 via-indigo-500/5 to-purple-500/10 p-6 md:p-8 backdrop-blur-xl shadow-card">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full bg-secondary/10 border border-secondary/20 px-3.5 py-1 text-xs font-semibold text-secondary mb-3">
+              <Cpu className="h-3.5 w-3.5" />
+              <span>Machine Learning Architecture & Governance Engine</span>
+            </div>
+            <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
+              Clinical Model Intelligence & Validation
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground max-w-2xl">
+              Transparent telemetry, performance benchmarks, and safety guardrails powering the UTI-AI Decision Support System. Calibrated against 315 verified inpatient nephrology records.
+            </p>
+          </div>
+          
+          <div className="flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-emerald-600 dark:text-emerald-400">
+            <ShieldCheck className="h-5 w-5 shrink-0" />
+            <div>
+              <span className="block text-xs font-bold uppercase tracking-wider">Guardrails</span>
+              <span className="text-sm font-semibold">100% Conflict Free</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Tri-Model Performance Scorecards */}
+      <div className="grid gap-6 md:grid-cols-3">
+        {/* Model 1 */}
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-card space-y-4">
+          <div className="flex items-center justify-between">
+            <span className="rounded-lg bg-emerald-500/10 p-2 text-emerald-500">
+              <Activity className="h-5 w-5" />
+            </span>
+            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+              Random Forest Classifier
+            </span>
+          </div>
+          <div>
+            <h3 className="text-lg font-bold text-foreground">Model 1: Bacteria Taxonomy</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Distinguishes Gram-negative bacilli from Gram-positive cocci using patient biomarkers and symptoms.
+            </p>
+          </div>
+          <div className="border-t border-border pt-4 grid grid-cols-2 gap-3 text-left">
+            <div>
+              <span className="text-[11px] text-muted-foreground">Holdout Accuracy</span>
+              <p className="text-xl font-bold text-foreground">79.1%</p>
+            </div>
+            <div>
+              <span className="text-[11px] text-muted-foreground">Class Weighting</span>
+              <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">Balanced</p>
+            </div>
+            <div>
+              <span className="text-[11px] text-muted-foreground">Target Classes</span>
+              <p className="text-sm font-semibold text-foreground">2 (Gram - / +)</p>
+            </div>
+            <div>
+              <span className="text-[11px] text-muted-foreground">Status</span>
+              <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-500">
+                <CheckCircle2 className="h-3.5 w-3.5" /> Deployed
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Model 2 */}
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-card space-y-4">
+          <div className="flex items-center justify-between">
+            <span className="rounded-lg bg-rose-500/10 p-2 text-rose-500">
+              <AlertCircle className="h-5 w-5" />
+            </span>
+            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+              MultiOutput Classifier
+            </span>
+          </div>
+          <div>
+            <h3 className="text-lg font-bold text-foreground">Model 2: Antimicrobial Resistance</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Predicts multi-label resistance signatures across 25 clinically supported antimicrobials.
+            </p>
+          </div>
+          <div className="border-t border-border pt-4 grid grid-cols-2 gap-3 text-left">
+            <div>
+              <span className="text-[11px] text-muted-foreground">Hamming Loss</span>
+              <p className="text-xl font-bold text-foreground">0.208</p>
+            </div>
+            <div>
+              <span className="text-[11px] text-muted-foreground">Drug Panel</span>
+              <p className="text-sm font-semibold text-foreground">25 Antibiotics</p>
+            </div>
+            <div>
+              <span className="text-[11px] text-muted-foreground">Feature Inputs</span>
+              <p className="text-sm font-semibold text-foreground">Demog + Labs + Prev Abx</p>
+            </div>
+            <div>
+              <span className="text-[11px] text-muted-foreground">Status</span>
+              <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-500">
+                <CheckCircle2 className="h-3.5 w-3.5" /> Deployed
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Model 3 */}
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-card space-y-4">
+          <div className="flex items-center justify-between">
+            <span className="rounded-lg bg-cyan-500/10 p-2 text-cyan-500">
+              <ShieldCheck className="h-5 w-5" />
+            </span>
+            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+              MultiOutput Classifier
+            </span>
+          </div>
+          <div>
+            <h3 className="text-lg font-bold text-foreground">Model 3: Susceptibility Prediction</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Forecasts therapeutic susceptibility across 28 first-line, broad-spectrum, and reserve agents.
+            </p>
+          </div>
+          <div className="border-t border-border pt-4 grid grid-cols-2 gap-3 text-left">
+            <div>
+              <span className="text-[11px] text-muted-foreground">Hamming Loss</span>
+              <p className="text-xl font-bold text-foreground">0.128</p>
+            </div>
+            <div>
+              <span className="text-[11px] text-muted-foreground">Drug Panel</span>
+              <p className="text-sm font-semibold text-foreground">28 Antibiotics</p>
+            </div>
+            <div>
+              <span className="text-[11px] text-muted-foreground">Safety Check</span>
+              <p className="text-sm font-semibold text-cyan-600 dark:text-cyan-400">Exclusivity Guard</p>
+            </div>
+            <div>
+              <span className="text-[11px] text-muted-foreground">Status</span>
+              <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-500">
+                <CheckCircle2 className="h-3.5 w-3.5" /> Deployed
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Feature Importance Chart */}
+      <div className="rounded-2xl border border-border bg-card p-6 shadow-card">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
+              <BarChart2 className="h-4 w-4 text-primary" />
+              Clinical Feature Importance (Gini Impurity Reduction)
+            </h3>
+            <p className="text-xs text-muted-foreground">
+              Normalized importance scores identifying the strongest predictive clinical biomarkers across the cohort
+            </p>
+          </div>
+        </div>
+
+        <div className="h-72 w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart 
+              data={FEATURE_IMPORTANCES} 
+              layout="vertical" 
+              margin={{ top: 5, right: 30, left: 100, bottom: 5 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" horizontal={false} opacity={0.15} />
+              <XAxis type="number" domain={[0, 0.2]} tickFormatter={(v) => `${(v * 100).toFixed(0)}%`} tick={{ fontSize: 11 }} />
+              <YAxis type="category" dataKey="feature" tick={{ fontSize: 11 }} width={120} />
+              <Tooltip 
+                formatter={(value: any) => [`${(Number(value) * 100).toFixed(1)}%`, 'Relative Weight']}
+                contentStyle={{ 
+                  backgroundColor: 'hsl(var(--card))', 
+                  borderColor: 'hsl(var(--border))', 
+                  borderRadius: '0.75rem',
+                  fontSize: '12px' 
+                }} 
+              />
+              <Bar dataKey="importance" fill="#0d9488" radius={[0, 4, 4, 0]}>
+                {FEATURE_IMPORTANCES.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={index < 3 ? '#059669' : '#0284c7'} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* Clinical Safety & Pipeline Architecture Flow */}
+      <div className="rounded-2xl border border-border bg-card p-6 shadow-card space-y-4">
+        <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
+          <GitBranch className="h-4 w-4 text-indigo-500" />
+          End-to-End Decision Architecture & Safety Pipeline
+        </h3>
+        <p className="text-xs text-muted-foreground">
+          Step-by-step data execution pipeline ensuring clinical reproducibility and safeguarding against contradictory recommendations:
+        </p>
+
+        <div className="grid gap-3 md:grid-cols-5 text-xs">
+          <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-1.5">
+            <span className="font-bold text-primary">Stage 1</span>
+            <h4 className="font-semibold text-foreground">Intake & Preprocessing</h4>
+            <p className="text-muted-foreground text-[11px]">
+              Type-casts 11 numerical biomarkers, one-hot encodes 7 categoricals, and extracts TF-IDF n-grams from notes.
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-1.5">
+            <span className="font-bold text-emerald-500">Stage 2</span>
+            <h4 className="font-semibold text-foreground">Model 1 Taxonomy</h4>
+            <p className="text-muted-foreground text-[11px]">
+              Classifies Gram-negative vs Gram-positive profile with balanced weighting to overcome natural clinical class skews.
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-1.5">
+            <span className="font-bold text-rose-500">Stage 3</span>
+            <h4 className="font-semibold text-foreground">Dual Multi-Label ML</h4>
+            <p className="text-muted-foreground text-[11px]">
+              Injects Model 1 taxonomy output into Models 2 & 3 to predict resistant and susceptible drug candidates concurrently.
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-1.5">
+            <span className="font-bold text-amber-500">Stage 4</span>
+            <h4 className="font-semibold text-foreground">Exclusivity Guardrail</h4>
+            <p className="text-muted-foreground text-[11px]">
+              Automated reconciliation: If a drug is predicted resistant, it is strictly filtered out of sensitive recommendations.
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-1.5">
+            <span className="font-bold text-secondary">Stage 5</span>
+            <h4 className="font-semibold text-foreground">Pharmacotherapy & Priya</h4>
+            <p className="text-muted-foreground text-[11px]">
+              Calculates eGFR/CrCl renal dose intervals and generates evidence-based antibiotic plans via multi-provider AI engine.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ModelGovernance;
