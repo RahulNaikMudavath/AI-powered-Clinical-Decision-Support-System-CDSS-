@@ -9,6 +9,7 @@ import {
   AlertCircle,
   FileCheck2
 } from "lucide-react";
+import modelMetrics from "@/data/model_metrics.json";
 
 interface HeroSectionProps {
   onSelectPreset?: (presetKey: "pyelonephritis" | "cauti" | "cystitis" | "male_recurrent") => void;
@@ -52,24 +53,30 @@ const HeroSection = ({ onSelectPreset }: HeroSectionProps) => {
             Instant machine learning predictions for uropathogen taxonomy, multi-label resistance profiles, and evidence-based renal antibiotic dosing calibrated against real hospital antibiograms.
           </p>
 
-          {/* Metric Badges */}
+          {/* Metric Badges (Loaded Directly from Ground-Truth Benchmark) */}
           <div className="mb-10 grid grid-cols-2 gap-3 sm:grid-cols-4 max-w-3xl mx-auto">
             <div className="rounded-xl border border-border bg-card/80 p-3.5 backdrop-blur-md shadow-card">
-              <span className="block text-2xl font-black text-foreground">315</span>
+              <span className="block text-2xl font-black text-foreground">
+                {modelMetrics.cohort.total_records}
+              </span>
               <span className="text-[11px] font-medium text-muted-foreground flex items-center justify-center gap-1 mt-0.5">
                 <Database className="h-3 w-3 text-emerald-500" /> Real Clinical Cases
               </span>
             </div>
 
             <div className="rounded-xl border border-border bg-card/80 p-3.5 backdrop-blur-md shadow-card">
-              <span className="block text-2xl font-black text-emerald-600 dark:text-emerald-400">84.4%</span>
+              <span className="block text-2xl font-black text-emerald-600 dark:text-emerald-400">
+                {modelMetrics.model_1_taxonomy.cross_validation.mean_accuracy}%
+              </span>
               <span className="text-[11px] font-medium text-muted-foreground flex items-center justify-center gap-1 mt-0.5">
                 <Brain className="h-3 w-3 text-primary" /> Pathogen Accuracy (5-Fold CV)
               </span>
             </div>
 
             <div className="rounded-xl border border-border bg-card/80 p-3.5 backdrop-blur-md shadow-card">
-              <span className="block text-2xl font-black text-secondary">53</span>
+              <span className="block text-2xl font-black text-secondary">
+                {modelMetrics.model_2_resistance.evaluated_drugs_count + modelMetrics.model_3_susceptibility.evaluated_drugs_count}
+              </span>
               <span className="text-[11px] font-medium text-muted-foreground flex items-center justify-center gap-1 mt-0.5">
                 <Activity className="h-3 w-3 text-secondary" /> Susceptibility Profiles
               </span>

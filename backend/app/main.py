@@ -41,6 +41,21 @@ def health_check():
     return {"status": "UP", "message": "UTI Antibiotic Recommendation API is running."}
 
 
+@app.get("/model-metrics")
+def get_model_metrics():
+    """
+    Returns verified ground-truth model accuracy, cross-validation metrics,
+    and dataset cohort statistics directly from the serialized benchmark JSON.
+    """
+    import os
+    import json
+    metrics_path = os.path.join(os.path.dirname(__file__), "models", "model_metrics.json")
+    if os.path.exists(metrics_path):
+        with open(metrics_path, "r") as f:
+            return json.load(f)
+    return {"error": "Metrics benchmark file not found"}
+
+
 @app.post("/predict", response_model=FinalResult)
 def predict_antibiotics(patient: PatientData):
     """

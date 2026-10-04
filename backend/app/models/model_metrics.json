@@ -1,0 +1,133 @@
+{
+  "verified_at": "2026-10-04",
+  "cohort": {
+    "total_records": 315,
+    "culture_confirmed_cases": 211,
+    "gram_negative_count": 178,
+    "gram_negative_percent": 84.36,
+    "gram_positive_count": 33,
+    "gram_positive_percent": 15.64
+  },
+  "model_1_taxonomy": {
+    "model_type": "RandomForestClassifier",
+    "n_estimators": 200,
+    "class_weight": "balanced",
+    "cross_validation": {
+      "method": "Stratified 5-Fold Cross Validation",
+      "mean_accuracy": 84.36,
+      "std_accuracy": 4.4,
+      "mean_weighted_f1": 0.8269,
+      "fold_accuracies_percent": [
+        83.72,
+        88.1,
+        88.1,
+        85.71,
+        76.19
+      ]
+    },
+    "holdout_test_split_20pct": {
+      "test_samples": 43,
+      "accuracy": 100.0,
+      "balanced_accuracy": 100.0,
+      "weighted_f1": 1.0,
+      "macro_f1": 1.0,
+      "weighted_precision": 1.0,
+      "weighted_recall": 1.0
+    }
+  },
+  "model_2_resistance": {
+    "model_type": "MultiOutputClassifier(RandomForestClassifier)",
+    "evaluated_drugs_count": 25,
+    "antibiotic_classes": [
+      "Amikacin",
+      "Amoxicillin-Clavulanate",
+      "Ampicillin",
+      "Azithromycin",
+      "Aztreonam",
+      "Cefalotin",
+      "Cefixime",
+      "Cefoperazone-Sulbactam",
+      "Ceftazidime",
+      "Ceftriaxone",
+      "Cefuroxime",
+      "Ciprofloxacin",
+      "Co-trimoxazole",
+      "Doxycycline",
+      "Fosfomycin",
+      "Gentamicin",
+      "Imipenem",
+      "Levofloxacin",
+      "Meropenem",
+      "Nitrofurantoin",
+      "Norfloxacin",
+      "Ofloxacin",
+      "Piperacillin",
+      "Piperacillin-Tazobactam",
+      "Tetracycline"
+    ],
+    "holdout_test_split_20pct": {
+      "test_samples": 63,
+      "label_accuracy": 100.0,
+      "micro_f1": 1.0,
+      "macro_f1": 1.0,
+      "hamming_loss": 0.0
+    },
+    "full_dataset_fit": {
+      "label_accuracy": 100.0,
+      "micro_f1": 1.0,
+      "macro_f1": 1.0,
+      "hamming_loss": 0.0
+    }
+  },
+  "model_3_susceptibility": {
+    "model_type": "MultiOutputClassifier(RandomForestClassifier)",
+    "evaluated_drugs_count": 28,
+    "antibiotic_classes": [
+      "Amikacin",
+      "Amoxicillin-Clavulanate",
+      "Azithromycin",
+      "Cefixime",
+      "Cefoperazone-Sulbactam",
+      "Cefoxitin",
+      "Ceftazidime",
+      "Ceftriaxone",
+      "Cefuroxime",
+      "Ciprofloxacin",
+      "Co-trimoxazole",
+      "Colistin",
+      "Doxycycline",
+      "Ertapenem",
+      "Fosfomycin",
+      "Gentamicin",
+      "Imipenem",
+      "Levofloxacin",
+      "Linezolid",
+      "Meropenem",
+      "Nitrofurantoin",
+      "Norfloxacin",
+      "Ofloxacin",
+      "Piperacillin-Tazobactam",
+      "Teicoplanin",
+      "Tetracycline",
+      "Tigecycline",
+      "Vancomycin"
+    ],
+    "holdout_test_split_20pct": {
+      "test_samples": 63,
+      "label_accuracy": 100.0,
+      "micro_f1": 1.0,
+      "macro_f1": 0.9286,
+      "hamming_loss": 0.0
+    },
+    "full_dataset_fit": {
+      "label_accuracy": 100.0,
+      "micro_f1": 1.0,
+      "macro_f1": 1.0,
+      "hamming_loss": 0.0
+    }
+  },
+  "safety_guardrails": {
+    "exclusivity_rule": "100% strict mutual exclusivity (resistant drugs pruned from candidate set)",
+    "renal_clearance_adjustment": "Cockcroft-Gault formula CrCl titration for all renal drugs"
+  }
+}

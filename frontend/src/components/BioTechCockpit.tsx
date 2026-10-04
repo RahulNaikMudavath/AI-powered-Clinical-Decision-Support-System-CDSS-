@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { PatientData } from "./PatientForm";
 import SmartEHRParser from "./SmartEHRParser";
 import PetriDishVisualizer from "./PetriDishVisualizer";
+import modelMetrics from "@/data/model_metrics.json";
 
 interface BioTechCockpitProps {
   onSubmit: (data: PatientData) => void;
@@ -129,15 +130,19 @@ const BioTechCockpit = ({ onSubmit, isLoading, initialData }: BioTechCockpitProp
             </div>
           </div>
 
-          {/* Quick HUD Metrics */}
+          {/* Quick HUD Metrics (Loaded Directly from Ground-Truth Benchmark) */}
           <div className="flex flex-wrap items-center gap-2 font-mono text-xs">
             <div className="rounded-xl border border-border/70 bg-card/60 px-3 py-1.5 backdrop-blur-md">
               <span className="text-[10px] text-muted-foreground block">COHORT BASELINE</span>
-              <span className="font-semibold text-cyan-400">315 Inpatients</span>
+              <span className="font-semibold text-cyan-400">
+                {modelMetrics.cohort.total_records} Inpatients
+              </span>
             </div>
             <div className="rounded-xl border border-border/70 bg-card/60 px-3 py-1.5 backdrop-blur-md">
               <span className="text-[10px] text-muted-foreground block">MODEL ACCURACY</span>
-              <span className="font-semibold text-emerald-400">84.4% (5-Fold CV)</span>
+              <span className="font-semibold text-emerald-400">
+                {modelMetrics.model_1_taxonomy.cross_validation.mean_accuracy}% (5-Fold CV)
+              </span>
             </div>
             <div className="rounded-xl border border-border/70 bg-card/60 px-3 py-1.5 backdrop-blur-md">
               <span className="text-[10px] text-muted-foreground block">SAFETY GUARDRAILS</span>

@@ -11,6 +11,7 @@ import {
   AlertCircle 
 } from "lucide-react";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Cell } from "recharts";
+import modelMetrics from "@/data/model_metrics.json";
 
 const FEATURE_IMPORTANCES = [
   { feature: "Serum Creatinine", importance: 0.165, category: "Renal Function" },
@@ -40,7 +41,7 @@ const ModelGovernance = () => {
               Clinical Model Intelligence & Validation
             </h2>
             <p className="mt-1 text-sm text-muted-foreground max-w-2xl">
-              Transparent telemetry, performance benchmarks, and safety guardrails powering the UTI-AI Decision Support System. Calibrated against 315 verified inpatient nephrology records.
+              Transparent telemetry, performance benchmarks, and safety guardrails powering the UTI-AI Decision Support System. Calibrated against {modelMetrics.cohort.total_records} verified inpatient records ({modelMetrics.cohort.culture_confirmed_cases} culture-confirmed isolates: {modelMetrics.cohort.gram_negative_percent}% Gram-Negative, {modelMetrics.cohort.gram_positive_percent}% Gram-Positive).
             </p>
           </div>
           
@@ -75,11 +76,21 @@ const ModelGovernance = () => {
           <div className="border-t border-border pt-4 grid grid-cols-2 gap-3 text-left">
             <div>
               <span className="text-[11px] text-muted-foreground">5-Fold CV Accuracy</span>
-              <p className="text-xl font-bold text-foreground">84.4%</p>
+              <p className="text-xl font-bold text-foreground">
+                {modelMetrics.model_1_taxonomy.cross_validation.mean_accuracy}%
+              </p>
+              <span className="text-[10px] text-muted-foreground font-mono">
+                ±{modelMetrics.model_1_taxonomy.cross_validation.std_accuracy}% (F1: {modelMetrics.model_1_taxonomy.cross_validation.mean_weighted_f1})
+              </span>
             </div>
             <div>
-              <span className="text-[11px] text-muted-foreground">Class Weighting</span>
-              <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">Balanced</p>
+              <span className="text-[11px] text-muted-foreground">Holdout Test Split</span>
+              <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
+                {modelMetrics.model_1_taxonomy.holdout_test_split_20pct.accuracy}%
+              </p>
+              <span className="text-[10px] text-muted-foreground font-mono">
+                {modelMetrics.model_1_taxonomy.holdout_test_split_20pct.test_samples} test cases
+              </span>
             </div>
             <div>
               <span className="text-[11px] text-muted-foreground">Target Classes</span>
@@ -107,21 +118,31 @@ const ModelGovernance = () => {
           <div>
             <h3 className="text-lg font-bold text-foreground">Model 2: Antimicrobial Resistance</h3>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Predicts multi-label resistance signatures across 25 clinically supported antimicrobials.
+              Predicts multi-label resistance signatures across {modelMetrics.model_2_resistance.evaluated_drugs_count} clinically supported antimicrobials.
             </p>
           </div>
           <div className="border-t border-border pt-4 grid grid-cols-2 gap-3 text-left">
             <div>
+              <span className="text-[11px] text-muted-foreground">Holdout Label Accuracy</span>
+              <p className="text-xl font-bold text-foreground">
+                {modelMetrics.model_2_resistance.holdout_test_split_20pct.label_accuracy}%
+              </p>
+              <span className="text-[10px] text-muted-foreground font-mono">
+                Micro-F1: {modelMetrics.model_2_resistance.holdout_test_split_20pct.micro_f1}
+              </span>
+            </div>
+            <div>
               <span className="text-[11px] text-muted-foreground">Hamming Loss</span>
-              <p className="text-xl font-bold text-foreground">0.208</p>
+              <p className="text-sm font-semibold text-foreground font-mono">
+                {modelMetrics.model_2_resistance.holdout_test_split_20pct.hamming_loss}
+              </p>
+              <span className="text-[10px] text-muted-foreground">
+                {modelMetrics.model_2_resistance.holdout_test_split_20pct.test_samples} test samples
+              </span>
             </div>
             <div>
               <span className="text-[11px] text-muted-foreground">Drug Panel</span>
-              <p className="text-sm font-semibold text-foreground">25 Antibiotics</p>
-            </div>
-            <div>
-              <span className="text-[11px] text-muted-foreground">Feature Inputs</span>
-              <p className="text-sm font-semibold text-foreground">Demog + Labs + Prev Abx</p>
+              <p className="text-sm font-semibold text-foreground">{modelMetrics.model_2_resistance.evaluated_drugs_count} Antibiotics</p>
             </div>
             <div>
               <span className="text-[11px] text-muted-foreground">Status</span>
@@ -145,21 +166,31 @@ const ModelGovernance = () => {
           <div>
             <h3 className="text-lg font-bold text-foreground">Model 3: Susceptibility Prediction</h3>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Forecasts therapeutic susceptibility across 28 first-line, broad-spectrum, and reserve agents.
+              Forecasts therapeutic susceptibility across {modelMetrics.model_3_susceptibility.evaluated_drugs_count} first-line, broad-spectrum, and reserve agents.
             </p>
           </div>
           <div className="border-t border-border pt-4 grid grid-cols-2 gap-3 text-left">
             <div>
+              <span className="text-[11px] text-muted-foreground">Holdout Label Accuracy</span>
+              <p className="text-xl font-bold text-foreground">
+                {modelMetrics.model_3_susceptibility.holdout_test_split_20pct.label_accuracy}%
+              </p>
+              <span className="text-[10px] text-muted-foreground font-mono">
+                Micro-F1: {modelMetrics.model_3_susceptibility.holdout_test_split_20pct.micro_f1}
+              </span>
+            </div>
+            <div>
               <span className="text-[11px] text-muted-foreground">Hamming Loss</span>
-              <p className="text-xl font-bold text-foreground">0.128</p>
+              <p className="text-sm font-semibold text-foreground font-mono">
+                {modelMetrics.model_3_susceptibility.holdout_test_split_20pct.hamming_loss}
+              </p>
+              <span className="text-[10px] text-muted-foreground">
+                {modelMetrics.model_3_susceptibility.holdout_test_split_20pct.test_samples} test samples
+              </span>
             </div>
             <div>
               <span className="text-[11px] text-muted-foreground">Drug Panel</span>
-              <p className="text-sm font-semibold text-foreground">28 Antibiotics</p>
-            </div>
-            <div>
-              <span className="text-[11px] text-muted-foreground">Safety Check</span>
-              <p className="text-sm font-semibold text-cyan-600 dark:text-cyan-400">Exclusivity Guard</p>
+              <p className="text-sm font-semibold text-foreground">{modelMetrics.model_3_susceptibility.evaluated_drugs_count} Antibiotics</p>
             </div>
             <div>
               <span className="text-[11px] text-muted-foreground">Status</span>
