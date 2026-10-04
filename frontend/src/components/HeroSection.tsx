@@ -62,9 +62,9 @@ const HeroSection = ({ onSelectPreset }: HeroSectionProps) => {
             </div>
 
             <div className="rounded-xl border border-border bg-card/80 p-3.5 backdrop-blur-md shadow-card">
-              <span className="block text-2xl font-black text-emerald-600 dark:text-emerald-400">79.1%</span>
+              <span className="block text-2xl font-black text-emerald-600 dark:text-emerald-400">84.4%</span>
               <span className="text-[11px] font-medium text-muted-foreground flex items-center justify-center gap-1 mt-0.5">
-                <Brain className="h-3 w-3 text-primary" /> Pathogen Accuracy
+                <Brain className="h-3 w-3 text-primary" /> Pathogen Accuracy (5-Fold CV)
               </span>
             </div>
 

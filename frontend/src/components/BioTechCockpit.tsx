@@ -137,7 +137,7 @@ const BioTechCockpit = ({ onSubmit, isLoading, initialData }: BioTechCockpitProp
             </div>
             <div className="rounded-xl border border-border/70 bg-card/60 px-3 py-1.5 backdrop-blur-md">
               <span className="text-[10px] text-muted-foreground block">MODEL ACCURACY</span>
-              <span className="font-semibold text-emerald-400">79.1% Balanced</span>
+              <span className="font-semibold text-emerald-400">84.4% (5-Fold CV)</span>
             </div>
             <div className="rounded-xl border border-border/70 bg-card/60 px-3 py-1.5 backdrop-blur-md">
               <span className="text-[10px] text-muted-foreground block">SAFETY GUARDRAILS</span>

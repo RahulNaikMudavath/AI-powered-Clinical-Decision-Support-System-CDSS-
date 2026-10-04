@@ -74,8 +74,8 @@ const ModelGovernance = () => {
           </div>
           <div className="border-t border-border pt-4 grid grid-cols-2 gap-3 text-left">
             <div>
-              <span className="text-[11px] text-muted-foreground">Holdout Accuracy</span>
-              <p className="text-xl font-bold text-foreground">79.1%</p>
+              <span className="text-[11px] text-muted-foreground">5-Fold CV Accuracy</span>
+              <p className="text-xl font-bold text-foreground">84.4%</p>
             </div>
             <div>
               <span className="text-[11px] text-muted-foreground">Class Weighting</span>
