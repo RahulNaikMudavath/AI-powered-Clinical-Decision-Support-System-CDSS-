@@ -15,9 +15,14 @@ from sklearn.preprocessing import (
 )
 from sklearn.impute import SimpleImputer
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import (
+    RandomForestClassifier,
+    ExtraTreesClassifier,
+    GradientBoostingClassifier,
+    VotingClassifier
+)
 from sklearn.multioutput import MultiOutputClassifier
-from sklearn.metrics import classification_report, f1_score, hamming_loss
+from sklearn.metrics import classification_report, f1_score, hamming_loss, accuracy_score
 
 # Add backend to path so imports work cleanly
 backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -66,9 +71,15 @@ def train_models():
     crcl = ((140.0 - age_clean) * weights * sex_factor) / (72.0 * creat_clean)
     df['ESTIMATED_CRCL'] = np.clip(crcl, 5.0, 200.0)
 
+    # Biomarker interaction terms
+    df['PYURIA_X_NLR'] = df['PYURIA_RATIO'] * df['NLR']
+    df['UREA_X_SII'] = df['UREA_CREAT_RATIO'] * df['SII']
+    df['AGE_X_CRCL'] = df['AGE'].fillna(50) * df['ESTIMATED_CRCL']
+
     numeric_features = base_numeric_features + [
         'NLR', 'ANC', 'ALC', 'PYURIA_RATIO', 'UREA_CREAT_RATIO',
-        'SII', 'IS_SEVERE', 'IS_RENAL_IMP', 'ESTIMATED_CRCL'
+        'SII', 'IS_SEVERE', 'IS_RENAL_IMP', 'ESTIMATED_CRCL',
+        'PYURIA_X_NLR', 'UREA_X_SII', 'AGE_X_CRCL'
     ]
 
     categorical_features = [
@@ -136,16 +147,37 @@ def train_models():
         remainder='drop'
     )
 
+    rf_m1 = RandomForestClassifier(
+        n_estimators=300,
+        max_depth=14,
+        min_samples_split=3,
+        class_weight='balanced_subsample',
+        random_state=42,
+        n_jobs=1
+    )
+    et_m1 = ExtraTreesClassifier(
+        n_estimators=300,
+        max_depth=16,
+        min_samples_split=3,
+        class_weight='balanced',
+        random_state=42,
+        n_jobs=1
+    )
+    gb_m1 = GradientBoostingClassifier(
+        n_estimators=200,
+        learning_rate=0.06,
+        max_depth=4,
+        random_state=42
+    )
+    ensemble_m1 = VotingClassifier(
+        estimators=[('rf', rf_m1), ('et', et_m1), ('gb', gb_m1)],
+        voting='soft',
+        weights=[2, 1, 2]
+    )
+
     model_1_pipeline = Pipeline(steps=[
         ('preprocessor', preprocessor_m1),
-        ('classifier', RandomForestClassifier(
-            n_estimators=250,
-            max_depth=14,
-            min_samples_split=3,
-            class_weight='balanced_subsample',
-            random_state=42,
-            n_jobs=1
-        ))
+        ('classifier', ensemble_m1)
     ])
 
     feature_columns_m1 = numeric_features + categorical_features + text_features
@@ -159,13 +191,26 @@ def train_models():
     model_1_pipeline.fit(X_train_m1, y_train_m1)
     acc_m1 = model_1_pipeline.score(X_test_m1, y_test_m1)
     y_pred_m1 = model_1_pipeline.predict(X_test_m1)
-    print(f"Model 1 Holdout Test Accuracy: {acc_m1:.4f}", flush=True)
+    y_proba_m1 = model_1_pipeline.predict_proba(X_test_m1)
+    print(f"Model 1 Ensemble Holdout Test Accuracy: {acc_m1:.4f}", flush=True)
+
+    # Selective classification on test set
+    mask_85 = (y_proba_m1[:, 1] >= 0.85) | (y_proba_m1[:, 1] <= 0.15)
+    if mask_85.sum() > 0:
+        sel_acc_85 = accuracy_score(y_test_m1[mask_85], y_pred_m1[mask_85])
+        print(f"Model 1 Selective Accuracy (Confidence >= 85%): {sel_acc_85*100:.2f}% ({mask_85.sum()}/{len(y_test_m1)} test cases)", flush=True)
+
+    mask_90 = (y_proba_m1[:, 1] >= 0.90) | (y_proba_m1[:, 1] <= 0.10)
+    if mask_90.sum() > 0:
+        sel_acc_90 = accuracy_score(y_test_m1[mask_90], y_pred_m1[mask_90])
+        print(f"Model 1 Selective Accuracy (Confidence >= 90%): {sel_acc_90*100:.2f}% ({mask_90.sum()}/{len(y_test_m1)} test cases)", flush=True)
+
     print("Model 1 Classification Report:\n", classification_report(y_test_m1, y_pred_m1, target_names=['Gram Negative', 'Gram Positive']), flush=True)
 
     # Fit on all confirmed bacterial cases
     model_1_pipeline.fit(X_m1, y_m1)
     joblib.dump(model_1_pipeline, os.path.join(model_dir, "model_1_bacteria.pkl"))
-    print("Saved model_1_bacteria.pkl", flush=True)
+    print("Saved ensemble model_1_bacteria.pkl", flush=True)
 
     # ==========================================
     # PREVIOUS ANTIBIOTICS ENCODING

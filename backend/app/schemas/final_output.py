@@ -56,6 +56,9 @@ class Predictions(BaseModel):
     sirs_sepsis_risk: Optional[str] = None
     nlr_ratio: Optional[float] = None
     pyuria_index: Optional[float] = None
+    confidence_tier: Optional[str] = None
+    accuracy_guarantee: Optional[str] = None
+    selective_action: Optional[str] = None
 
 class AntibioticRecommendation(BaseModel):
     name: str
