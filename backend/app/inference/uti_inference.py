@@ -231,9 +231,23 @@ class BacteriaInferenceEngine:
         risks = str(row.get('RISKFACTORS', row.get('riskfactors', ''))).strip()
         combined_risks = "; ".join([s for s in [comorb, risks] if s and s.lower() not in ['none', 'nil', 'nan']])
         if combined_risks:
+            # Generate a concise badge label (e.g. "T2DM / Renal Risk")
+            badge_val = "High-Risk Host"
+            if comorb and comorb.lower() not in ['none', 'nil', 'nan']:
+                first_c = comorb.split(",")[0].split(";")[0].strip()
+                if "diabetes" in first_c.lower():
+                    badge_val = "T2DM Complicated"
+                elif len(first_c) <= 20:
+                    badge_val = first_c
+                else:
+                    badge_val = first_c[:18] + "…"
+            elif risks and risks.lower() not in ['none', 'nil', 'nan']:
+                first_r = risks.split(",")[0].split(";")[0].strip()
+                badge_val = first_r if len(first_r) <= 20 else first_r[:18] + "…"
+
             factors.append({
                 "feature": "Comorbidity / Host Risks",
-                "value": combined_risks,
+                "value": badge_val,
                 "impact": "Host Vulnerability Factor",
                 "clinical_rationale": f"Underlying condition(s) '{combined_risks}' classify infection as complicated, elevating multi-drug resistance likelihood."
             })

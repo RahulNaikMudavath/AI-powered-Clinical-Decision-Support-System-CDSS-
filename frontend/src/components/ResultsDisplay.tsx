@@ -706,9 +706,13 @@ ${results.summary}
                       }`}
                     >
                       <div className="flex items-start justify-between gap-2 mb-2">
-                        <span className="text-xs font-bold text-foreground">{factor.feature}</span>
-                        <Badge variant="secondary" className="text-[10px] font-mono shrink-0">
-                          {factor.value}
+                        <span className="text-xs font-bold text-foreground shrink-0 max-w-[55%]">{factor.feature}</span>
+                        <Badge 
+                          variant="secondary" 
+                          className="text-[10px] font-mono max-w-[160px] truncate border border-cyan-500/30 bg-cyan-500/15 text-cyan-300 dark:text-cyan-200 font-semibold"
+                          title={factor.value}
+                        >
+                          <span className="truncate">{factor.value}</span>
                         </Badge>
                       </div>
                       <div className="mb-2">
