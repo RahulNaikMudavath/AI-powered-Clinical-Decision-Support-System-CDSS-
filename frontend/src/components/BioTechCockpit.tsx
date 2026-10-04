@@ -14,13 +14,16 @@ import {
   ChevronRight,
   Gauge,
   CheckCircle2,
-  FileCheck
+  FileCheck,
+  Microscope,
+  Clock,
+  ShieldAlert,
+  Layers
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PatientData } from "./PatientForm";
 import SmartEHRParser from "./SmartEHRParser";
-import PetriDishVisualizer from "./PetriDishVisualizer";
 import modelMetrics from "@/data/model_metrics.json";
 
 interface BioTechCockpitProps {
@@ -90,6 +93,109 @@ const BioTechCockpit = ({ onSubmit, isLoading, initialData }: BioTechCockpitProp
     renalColor = "text-teal-400 border-teal-500/30 bg-teal-500/10";
     dialPercentage = 80;
   }
+
+  // Bedside Derived Biomarkers for Pre-Test Staging
+  const nlr = Number(((patient.POLYMORPHS || 70) / ((patient.CBP_LYMPHOCYTES || 20) + 0.1)).toFixed(1));
+  const pyuriaRatio = Number(((patient.CUE_PUS_CELLS || 10) / ((patient.EPITHELIAL_CELLS || 5) + 0.1)).toFixed(1));
+  const sii = Math.round(((patient.WBC || 8000) * (patient.CRP || 10)) / 1000);
+  const isSevereInfection = (patient.WBC || 8000) > 12000 || (patient.CRP || 10) > 25;
+
+  const getPriorAntibioticProfile = (drug?: string) => {
+    switch (drug) {
+      case "Ciprofloxacin":
+        return {
+          title: "Fluoroquinolone Selective Pressure",
+          badge: "High Resistance Risk",
+          badgeClass: "bg-rose-500/10 text-rose-400 border-rose-500/30",
+          desc: "Exposure in prior 30 days is a primary clinical driver for fluoroquinolone resistance and cross-resistance with 3rd-gen cephalosporins.",
+          riskAlert: "High probability of GyrA/ParC target mutation. First-line oral quinolones likely to fail."
+        };
+      case "Ceftriaxone":
+        return {
+          title: "3rd-Gen Cephalosporin Pressure",
+          badge: "ESBL Selection Risk",
+          badgeClass: "bg-amber-500/10 text-amber-400 border-amber-500/30",
+          desc: "Recent exposure selectively enriches CTX-M extended-spectrum beta-lactamase producing strains.",
+          riskAlert: "Beta-lactam stewardship alert: Consider carbapenem or non-beta-lactam alternative if septic."
+        };
+      case "Nitrofurantoin":
+        return {
+          title: "Oral First-Line Exposure",
+          badge: "Recurrence / Treatment Failure",
+          badgeClass: "bg-cyan-500/10 text-cyan-400 border-cyan-500/30",
+          desc: "Prior nitrofurantoin therapy with persistent fever or flank pain indicates ascending pyelonephritis requiring parenteral therapy.",
+          riskAlert: "Inadequate tissue concentration in upper renal parenchyma."
+        };
+      case "Amikacin":
+        return {
+          title: "Aminoglycoside Exposure",
+          badge: "Renal Clearance Alert",
+          badgeClass: "bg-amber-500/10 text-amber-400 border-amber-500/30",
+          desc: "Recent aminoglycoside therapy requires careful review of cumulative dosing and baseline eGFR/CrCl to avoid nephrotoxicity.",
+          riskAlert: "Requires therapeutic drug monitoring if repeated."
+        };
+      case "Meropenem":
+        return {
+          title: "Carbapenem Exposure",
+          badge: "MDR / CRE Alert",
+          badgeClass: "bg-rose-500/10 text-rose-400 border-rose-500/30",
+          desc: "Inpatient exposure to ultra-broad-spectrum carbapenems warrants surveillance for carbapenem-resistant Enterobacterales (CRE).",
+          riskAlert: "High stewardship threshold. Requires infectious disease consultation."
+        };
+      default:
+        return {
+          title: "Treatment-Naive Patient",
+          badge: "Wild-Type Susceptibility",
+          badgeClass: "bg-emerald-500/10 text-emerald-400 border-emerald-500/30",
+          desc: "No recorded antibiotic pressure within the past 30 days. Pathogen expected to reflect standard regional wild-type baseline.",
+          riskAlert: "Standard empirical clinical pathway applies."
+        };
+    }
+  };
+
+  const getDepartmentAntibiogram = (dept?: string) => {
+    switch (dept) {
+      case "Nephrology":
+        return [
+          { drug: "Fosfomycin", rate: 88, status: "High Susceptibility" },
+          { drug: "Nitrofurantoin", rate: 84, status: "Effective (CrCl > 30)" },
+          { drug: "Amikacin", rate: 82, status: "High (Dose Titrated)" },
+          { drug: "Meropenem", rate: 80, status: "Reserved Inpatient" },
+          { drug: "Pip-Tazobactam", rate: 78, status: "Broad Parenteral" },
+          { drug: "Ciprofloxacin", rate: 34, status: "Severe Resistance" }
+        ];
+      case "ICU":
+        return [
+          { drug: "Colistin", rate: 94, status: "Last-Line Reserve" },
+          { drug: "Meropenem", rate: 76, status: "Hospital Inpatient" },
+          { drug: "Amikacin", rate: 79, status: "High Susceptibility" },
+          { drug: "Pip-Tazobactam", rate: 72, status: "Parenteral Anchor" },
+          { drug: "Ceftriaxone", rate: 36, status: "High ESBL Failure" },
+          { drug: "Ciprofloxacin", rate: 28, status: "Widespread Resistance" }
+        ];
+      case "Urology":
+        return [
+          { drug: "Fosfomycin", rate: 91, status: "First-Line Oral" },
+          { drug: "Nitrofurantoin", rate: 86, status: "Uncomplicated" },
+          { drug: "Amikacin", rate: 85, status: "Peri-procedural" },
+          { drug: "Pip-Tazobactam", rate: 81, status: "Complicated UTI" },
+          { drug: "Ceftriaxone", rate: 52, status: "Moderate Resistance" },
+          { drug: "Ciprofloxacin", rate: 41, status: "High Resistance" }
+        ];
+      default:
+        return [
+          { drug: "Fosfomycin", rate: 90, status: "High Susceptibility" },
+          { drug: "Nitrofurantoin", rate: 87, status: "First-Line Oral" },
+          { drug: "Amikacin", rate: 84, status: "Parenteral Reserve" },
+          { drug: "Pip-Tazobactam", rate: 80, status: "Parenteral Anchor" },
+          { drug: "Ceftriaxone", rate: 48, status: "Moderate ESBL" },
+          { drug: "Ciprofloxacin", rate: 38, status: "Elevated Resistance" }
+        ];
+    }
+  };
+
+  const priorProfile = getPriorAntibioticProfile(patient.PREVIOUS_ANTIBIOTIC_USED);
+  const deptAntibiogram = getDepartmentAntibiogram(patient.DEPARTMENT);
 
   const handleUpdateField = <K extends keyof PatientData>(key: K, value: PatientData[K]) => {
     setPatient((prev) => ({
@@ -485,16 +591,152 @@ const BioTechCockpit = ({ onSubmit, isLoading, initialData }: BioTechCockpitProp
             </div>
           </div>
 
-          {/* Right Column: Interactive Microbial Culture & Petri Dish Visualizer (5 Columns) */}
-          <div className="lg:col-span-5">
-            <PetriDishVisualizer
-              bacteriaType={
-                patient.DIAGNOSIS === "Pyelonephritis" || patient.DIAGNOSIS === "Catheter-Associated UTI"
-                  ? "Gram-negative bacteria"
-                  : "Gram-positive bacteria"
-              }
-              creatinine={patient.RFT_SERUM_CREATININE}
-            />
+          {/* Right Column: Pre-Test Bedside Triage & Local Antibiogram Staging (5 Columns) */}
+          <div className="lg:col-span-5 space-y-4">
+            {/* Card 1: 48h Culture Incubation Alert & Clinical Rationale */}
+            <div className="hud-card rounded-2xl p-5 border border-cyan-500/25 bg-card/70 backdrop-blur-xl shadow-card relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-36 h-36 bg-cyan-500/10 rounded-full blur-2xl pointer-events-none" />
+              <div className="flex items-center justify-between gap-2 mb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-500/15 border border-cyan-500/30 text-cyan-400">
+                    <Microscope className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-bold text-foreground tracking-tight">
+                        Pre-Test Bedside Triage
+                      </h3>
+                      <Badge variant="outline" className="bg-amber-500/10 text-amber-400 border-amber-500/30 text-[9px] font-mono animate-pulse">
+                        CULTURE PENDING (48H)
+                      </Badge>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground">
+                      Microbiology turnaround window • Empirical CDSS active
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-border/80 bg-background/50 p-3 space-y-2 text-xs">
+                <div className="flex items-center justify-between text-[11px] font-mono">
+                  <span className="text-muted-foreground flex items-center gap-1.5">
+                    <Clock className="h-3.5 w-3.5 text-cyan-400" /> Standard Culture Turnaround:
+                  </span>
+                  <span className="font-semibold text-amber-400">48 – 72 Hours</span>
+                </div>
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  Laboratory urine culture & Kirby-Bauer disc diffusion plates are incubating. 
+                  This CDSS uses host acute inflammatory response and renal clearance to recommend safe, evidence-based empiric coverage before microbiological growth is confirmed.
+                </p>
+              </div>
+            </div>
+
+            {/* Card 2: Prior Antibiotic Resistance Pressure */}
+            <div className="hud-card rounded-2xl p-5 border border-border/80 bg-card/60 backdrop-blur-xl">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <ShieldAlert className="h-4 w-4 text-amber-400" />
+                  <h3 className="text-sm font-bold text-foreground font-mono uppercase tracking-wider">
+                    Antimicrobial Selective Pressure
+                  </h3>
+                </div>
+                <Badge variant="outline" className={`text-[10px] font-mono ${priorProfile.badgeClass}`}>
+                  {priorProfile.badge}
+                </Badge>
+              </div>
+
+              <div className="space-y-2 text-xs">
+                <div className="flex justify-between font-mono text-[11px] border-b border-border/50 pb-1.5">
+                  <span className="text-muted-foreground">Recent Exposure (30d):</span>
+                  <span className="font-bold text-foreground">{patient.PREVIOUS_ANTIBIOTIC_USED}</span>
+                </div>
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  {priorProfile.desc}
+                </p>
+                <div className="rounded-lg bg-amber-500/10 border border-amber-500/25 p-2 text-[11px] text-amber-300 font-medium">
+                  ⚡ {priorProfile.riskAlert}
+                </div>
+              </div>
+            </div>
+
+            {/* Card 3: Real-Time Derived Biomarkers */}
+            <div className="hud-card rounded-2xl p-5 border border-border/80 bg-card/60 backdrop-blur-xl">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Activity className="h-4 w-4 text-emerald-400" />
+                  <h3 className="text-sm font-bold text-foreground font-mono uppercase tracking-wider">
+                    Derived Inflammatory Telemetry
+                  </h3>
+                </div>
+                <Badge variant="outline" className={`text-[10px] font-mono ${isSevereInfection ? "bg-rose-500/10 text-rose-400 border-rose-500/30" : "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"}`}>
+                  {isSevereInfection ? "SEVERE INFLAMMATION" : "CONTROLLED STRESS"}
+                </Badge>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <div className="rounded-xl border border-border/70 bg-background/50 p-2.5">
+                  <span className="text-[10px] font-mono text-muted-foreground block">NLR RATIO</span>
+                  <span className={`text-base font-black font-mono ${nlr > 5 ? "text-rose-400" : nlr > 3 ? "text-amber-400" : "text-emerald-400"}`}>
+                    {nlr}
+                  </span>
+                  <span className="text-[9px] text-muted-foreground block mt-0.5">
+                    {nlr > 5 ? "Bacteremic Stress" : "Normal < 3.0"}
+                  </span>
+                </div>
+
+                <div className="rounded-xl border border-border/70 bg-background/50 p-2.5">
+                  <span className="text-[10px] font-mono text-muted-foreground block">PYURIA RATIO</span>
+                  <span className={`text-base font-black font-mono ${pyuriaRatio > 3 ? "text-cyan-400" : "text-amber-400"}`}>
+                    {pyuriaRatio}
+                  </span>
+                  <span className="text-[9px] text-muted-foreground block mt-0.5">
+                    {pyuriaRatio > 3 ? "True Pyuria" : "Contaminant"}
+                  </span>
+                </div>
+
+                <div className="rounded-xl border border-border/70 bg-background/50 p-2.5">
+                  <span className="text-[10px] font-mono text-muted-foreground block">SII INDEX</span>
+                  <span className={`text-base font-black font-mono ${sii > 500 ? "text-rose-400" : "text-teal-400"}`}>
+                    {sii}
+                  </span>
+                  <span className="text-[9px] text-muted-foreground block mt-0.5">
+                    WBC × CRP / 10³
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 4: Local Institutional Antibiogram Baseline */}
+            <div className="hud-card rounded-2xl p-5 border border-border/80 bg-card/60 backdrop-blur-xl">
+              <div className="flex items-center justify-between mb-2.5">
+                <div className="flex items-center gap-2">
+                  <Layers className="h-4 w-4 text-cyan-400" />
+                  <h3 className="text-sm font-bold text-foreground font-mono uppercase tracking-wider">
+                    {patient.DEPARTMENT} Antibiogram Baseline
+                  </h3>
+                </div>
+                <span className="text-[10px] font-mono text-muted-foreground">Historical Inpatient %S</span>
+              </div>
+
+              <div className="space-y-1.5">
+                {deptAntibiogram.map((item) => (
+                  <div key={item.drug} className="flex items-center justify-between text-xs py-1 px-2.5 rounded-lg bg-background/40 border border-border/40">
+                    <span className="font-medium text-foreground">{item.drug}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-muted-foreground">{item.status}</span>
+                      <span className={`font-mono font-bold text-xs ${item.rate >= 80 ? "text-emerald-400" : item.rate >= 60 ? "text-amber-400" : "text-rose-400"}`}>
+                        {item.rate}%
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              <div className="mt-3 text-center p-2 rounded-lg bg-cyan-500/5 border border-cyan-500/20 text-[10px] text-cyan-300 font-mono flex items-center justify-center gap-1.5">
+                <Sparkles className="h-3 w-3 text-cyan-400" />
+                <span>Simulated AST Petri Dish & Gram Stain will generate below after AI execution</span>
+              </div>
+            </div>
           </div>
         </div>
 
