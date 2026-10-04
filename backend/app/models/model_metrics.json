@@ -1,12 +1,12 @@
 {
   "verified_at": "2026-10-04",
   "cohort": {
-    "total_records": 315,
-    "culture_confirmed_cases": 211,
-    "gram_negative_count": 178,
-    "gram_negative_percent": 84.36,
-    "gram_positive_count": 33,
-    "gram_positive_percent": 15.64
+    "total_records": 659,
+    "culture_confirmed_cases": 542,
+    "gram_negative_count": 449,
+    "gram_negative_percent": 82.84,
+    "gram_positive_count": 93,
+    "gram_positive_percent": 17.16
   },
   "model_1_taxonomy": {
     "model_type": "RandomForestClassifier",
@@ -14,85 +14,107 @@
     "class_weight": "balanced",
     "cross_validation": {
       "method": "Stratified 5-Fold Cross Validation",
-      "mean_accuracy": 84.36,
-      "std_accuracy": 4.4,
-      "mean_weighted_f1": 0.8269,
+      "mean_accuracy": 76.75,
+      "std_accuracy": 2.63,
+      "mean_weighted_f1": 0.7846,
       "fold_accuracies_percent": [
-        83.72,
-        88.1,
-        88.1,
-        85.71,
-        76.19
+        77.98,
+        78.9,
+        74.07,
+        73.15,
+        79.63
       ]
     },
     "holdout_test_split_20pct": {
-      "test_samples": 43,
-      "accuracy": 100.0,
-      "balanced_accuracy": 100.0,
-      "weighted_f1": 1.0,
-      "macro_f1": 1.0,
-      "weighted_precision": 1.0,
-      "weighted_recall": 1.0
+      "test_samples": 109,
+      "accuracy": 88.99,
+      "balanced_accuracy": 93.33,
+      "weighted_f1": 0.8992,
+      "macro_f1": 0.8443,
+      "weighted_precision": 0.9325,
+      "weighted_recall": 0.8899
     }
   },
   "model_2_resistance": {
     "model_type": "MultiOutputClassifier(RandomForestClassifier)",
-    "evaluated_drugs_count": 25,
+    "evaluated_drugs_count": 41,
     "antibiotic_classes": [
       "Amikacin",
+      "Amoxicillin",
       "Amoxicillin-Clavulanate",
+      "Amoxiclav",
       "Ampicillin",
       "Azithromycin",
       "Aztreonam",
       "Cefalotin",
+      "Cefazolin",
       "Cefixime",
       "Cefoperazone-Sulbactam",
+      "Cefotaxime",
+      "Cefoxitin",
       "Ceftazidime",
       "Ceftriaxone",
       "Cefuroxime",
+      "Cephalosporines",
       "Ciprofloxacin",
+      "Clindamycin",
       "Co-trimoxazole",
+      "Colistin",
       "Doxycycline",
+      "Erythromycin",
+      "Extended Spectrum Pencillins",
+      "Extended Spectrum Penicillin",
+      "Extendedspectrumpencillins",
+      "Extendedspectrumpenicillin",
       "Fosfomycin",
       "Gentamicin",
       "Imipenem",
       "Levofloxacin",
       "Meropenem",
+      "Meropenum",
+      "Nalidixic Acid",
       "Nitrofurantoin",
       "Norfloxacin",
       "Ofloxacin",
       "Piperacillin",
       "Piperacillin-Tazobactam",
+      "Quinalones",
       "Tetracycline"
     ],
     "holdout_test_split_20pct": {
-      "test_samples": 63,
-      "label_accuracy": 100.0,
-      "micro_f1": 1.0,
-      "macro_f1": 1.0,
-      "hamming_loss": 0.0
+      "test_samples": 132,
+      "label_accuracy": 97.75,
+      "micro_f1": 0.8763,
+      "macro_f1": 0.7615,
+      "hamming_loss": 0.0225
     },
     "full_dataset_fit": {
-      "label_accuracy": 100.0,
-      "micro_f1": 1.0,
-      "macro_f1": 1.0,
-      "hamming_loss": 0.0
+      "label_accuracy": 97.51,
+      "micro_f1": 0.8539,
+      "macro_f1": 0.9006,
+      "hamming_loss": 0.0249
     }
   },
   "model_3_susceptibility": {
     "model_type": "MultiOutputClassifier(RandomForestClassifier)",
-    "evaluated_drugs_count": 28,
+    "evaluated_drugs_count": 38,
     "antibiotic_classes": [
       "Amikacin",
+      "Amoxicillin",
       "Amoxicillin-Clavulanate",
       "Azithromycin",
+      "Cefaperzone",
+      "Cefaperzone+Sulbactum",
       "Cefixime",
+      "Cefoperazone",
       "Cefoperazone-Sulbactam",
+      "Cefotoxime",
       "Cefoxitin",
       "Ceftazidime",
       "Ceftriaxone",
       "Cefuroxime",
       "Ciprofloxacin",
+      "Clindamycin",
       "Co-trimoxazole",
       "Colistin",
       "Doxycycline",
@@ -103,27 +125,31 @@
       "Levofloxacin",
       "Linezolid",
       "Meropenem",
+      "Meropenum",
+      "Metronidazole",
       "Nitrofurantoin",
       "Norfloxacin",
       "Ofloxacin",
+      "Piperacillin",
       "Piperacillin-Tazobactam",
+      "Sulbactum",
       "Teicoplanin",
       "Tetracycline",
       "Tigecycline",
       "Vancomycin"
     ],
     "holdout_test_split_20pct": {
-      "test_samples": 63,
-      "label_accuracy": 100.0,
-      "micro_f1": 1.0,
-      "macro_f1": 0.9286,
-      "hamming_loss": 0.0
+      "test_samples": 132,
+      "label_accuracy": 98.33,
+      "micro_f1": 0.865,
+      "macro_f1": 0.8974,
+      "hamming_loss": 0.0167
     },
     "full_dataset_fit": {
-      "label_accuracy": 100.0,
-      "micro_f1": 1.0,
-      "macro_f1": 1.0,
-      "hamming_loss": 0.0
+      "label_accuracy": 98.35,
+      "micro_f1": 0.8622,
+      "macro_f1": 0.9087,
+      "hamming_loss": 0.0165
     }
   },
   "safety_guardrails": {

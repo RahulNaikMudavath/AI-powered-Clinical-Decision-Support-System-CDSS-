@@ -35,16 +35,31 @@ class PatientDetails(BaseModel):
     previous_antibiotic_used: Optional[str] = None
     lab_results: LabResults
 
+class ExplainabilityFactor(BaseModel):
+    feature: str
+    value: str
+    impact: str
+    clinical_rationale: str
+
 class Predictions(BaseModel):
     bacteria_type_prediction: str
+    confidence_score: Optional[float] = None
+    gram_negative_probability: Optional[float] = None
+    gram_positive_probability: Optional[float] = None
     predicted_resistant_antibiotics: List[str]
     predicted_sensitive_antibiotics: List[str]
+    resistant_probabilities: Optional[Dict[str, float]] = None
+    sensitive_probabilities: Optional[Dict[str, float]] = None
+    explainability_factors: Optional[List[ExplainabilityFactor]] = None
 
 class AntibioticRecommendation(BaseModel):
     name: str
     dosage: str
     precautions: str
     explanation: str
+    guideline_badge: Optional[str] = None
+    renal_dose_status: Optional[str] = None
+    safety_tier: Optional[str] = None
 
 class PrescribedAntibiotics(BaseModel):
     recommended: List[AntibioticRecommendation]

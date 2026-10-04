@@ -34,10 +34,9 @@ const HeroSection = ({ onSelectPreset }: HeroSectionProps) => {
 
       <div className="container relative mx-auto px-4 md:px-6">
         <div className="mx-auto max-w-4xl text-center">
-          {/* Badge */}
           <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-4 py-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400 backdrop-blur-md shadow-sm">
             <Sparkles className="h-3.5 w-3.5" />
-            <span>Calibrated on 315 Inpatient Nephrology Cases • Hospital CDSS</span>
+            <span>Calibrated on {modelMetrics.cohort.total_records} Multi-Department Clinical Cases • Hospital CDSS</span>
           </div>
           
           {/* Main Title */}

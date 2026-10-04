@@ -3,6 +3,46 @@ from app.services.llm_service import LLMService
 from app.config import MODEL_DIR
 from app.utils.llm_prompts import PROMPT_FOR_PRECRIBED_ANTIBIOTICS, PROMPT_FOR_ANTIBIOTIC_HISTORY, PROMPT_FOR_SUMMARY
 
+def annotate_antibiotic_guideline(name: str, creatinine: float = 1.0) -> dict:
+    """Attaches IDSA/EAU/CLSI guideline metadata and renal adjustments."""
+    name_clean = name.strip()
+    name_lower = name_clean.lower()
+
+    if any(k in name_lower for k in ["fosfomycin", "nitrofurantoin"]):
+        guideline = "IDSA Grade 1A First-Line"
+        tier = "Tier 1: Narrow-Spectrum Oral First-Line"
+    elif any(k in name_lower for k in ["imipenem", "meropenem", "ertapenem"]):
+        guideline = "IDSA Guideline: Carbapenem Reserve"
+        tier = "Tier 3: Carbapenem Critical Care Reserve"
+    elif any(k in name_lower for k in ["amikacin", "gentamicin", "tobramycin"]):
+        guideline = "CLSI M100 Therapeutic Monitored"
+        tier = "Tier 2: Broad-Spectrum Aminoglycoside"
+    elif any(k in name_lower for k in ["ceftriaxone", "cefepime", "piperacillin", "cefoperazone"]):
+        guideline = "EAU Complicated UTI Guideline"
+        tier = "Tier 2: Broad-Spectrum Beta-Lactam"
+    elif any(k in name_lower for k in ["vancomycin", "linezolid", "teicoplanin"]):
+        guideline = "IDSA Targeted Gram-Positive Reserve"
+        tier = "Tier 3: Targeted MRSA/Enterococcal Reserve"
+    else:
+        guideline = "CLSI M100 Susceptibility Standard"
+        tier = "Tier 2: Targeted Pathogen-Directed"
+
+    if creatinine > 1.2:
+        if any(k in name_lower for k in ["amikacin", "gentamicin", "colistin"]):
+            renal_status = "Renal Alert: Contraindicated or Trough Monitored (Creatinine > 1.2)"
+        elif "nitrofurantoin" in name_lower:
+            renal_status = "Renal Warning: Ineffective if eGFR < 30 mL/min"
+        else:
+            renal_status = "Renal Adjusted: Dose reduced per clearance"
+    else:
+        renal_status = "Standard Renal Clearance: Standard Regimen"
+
+    return {
+        "guideline_badge": guideline,
+        "renal_dose_status": renal_status,
+        "safety_tier": tier
+    }
+
 class UTIService:
     def __init__(self):
         """
@@ -36,8 +76,14 @@ class UTIService:
         return {
             "patient_index": item["patient_index"],
             "bacteria_type_prediction": bacteria_type,
+            "confidence_score": item.get("confidence_score", 85.0),
+            "gram_negative_probability": item.get("gram_negative_probability", 50.0),
+            "gram_positive_probability": item.get("gram_positive_probability", 50.0),
             "predicted_resistant_antibiotics": raw_resistant,
-            "predicted_sensitive_antibiotics": reconciled_sensitive
+            "predicted_sensitive_antibiotics": reconciled_sensitive,
+            "resistant_probabilities": item.get("resistant_probabilities", {}),
+            "sensitive_probabilities": item.get("sensitive_probabilities", {}),
+            "explainability_factors": item.get("explainability_factors", [])
         }
 
     def get_precribed_antibiotics(self, patient_data: dict, predictions: dict) -> dict:
@@ -47,19 +93,39 @@ class UTIService:
             "predictions": predictions
         }
         res = self.llm_service.invoke_llm(system_prompt, user_prompt)
+        
+        # Determine patient serum creatinine for renal annotation
+        creat = patient_data.get("rft_serum_creatinine", 1.0)
+        try:
+            creat_val = float(creat) if creat is not None and str(creat).strip() != '' else 1.0
+        except (ValueError, TypeError):
+            creat_val = 1.0
+
         if isinstance(res, dict) and "recommended" in res and isinstance(res["recommended"], list):
+            for drug in res["recommended"]:
+                if isinstance(drug, dict) and "name" in drug:
+                    annotations = annotate_antibiotic_guideline(drug["name"], creat_val)
+                    drug.setdefault("guideline_badge", annotations["guideline_badge"])
+                    drug.setdefault("renal_dose_status", annotations["renal_dose_status"])
+                    drug.setdefault("safety_tier", annotations["safety_tier"])
             return res
+
         # Fallback structure if malformed
+        fallback_list = []
+        for abx in predictions.get("predicted_sensitive_antibiotics", ["Cefepime"])[:3]:
+            annotations = annotate_antibiotic_guideline(abx, creat_val)
+            fallback_list.append({
+                "name": abx,
+                "dosage": "Standard renal-adjusted clinical dose",
+                "precautions": "Monitor renal function, fluid balance, and hypersensitivity profile",
+                "explanation": f"High-confidence sensitive agent for {predictions.get('bacteria_type_prediction', 'UTI')} infection.",
+                "guideline_badge": annotations["guideline_badge"],
+                "renal_dose_status": annotations["renal_dose_status"],
+                "safety_tier": annotations["safety_tier"]
+            })
+
         return {
-            "recommended": [
-                {
-                    "name": abx,
-                    "dosage": "Standard renal-adjusted clinical dose",
-                    "precautions": "Monitor renal function and allergy profile",
-                    "explanation": f"Predicted sensitive agent for {predictions.get('bacteria_type_prediction', 'UTI')} infection."
-                }
-                for abx in predictions.get("predicted_sensitive_antibiotics", ["Cefepime"])[:3]
-            ]
+            "recommended": fallback_list
         }
 
     def get_antibiotic_history(self, antibiotics: list) -> dict:

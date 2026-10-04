@@ -115,8 +115,8 @@ def train_models():
     model_1_pipeline = Pipeline(steps=[
         ('preprocessor', preprocessor_m1),
         ('classifier', RandomForestClassifier(
-            n_estimators=200,
-            max_depth=None,
+            n_estimators=150,
+            max_depth=12,
             class_weight='balanced',
             random_state=42,
             n_jobs=1
@@ -206,7 +206,8 @@ def train_models():
         ('preprocessor', preprocessor_m2),
         ('classifier', MultiOutputClassifier(
             RandomForestClassifier(
-                n_estimators=200,
+                n_estimators=150,
+                max_depth=12,
                 class_weight='balanced',
                 random_state=42,
                 n_jobs=1
@@ -279,7 +280,8 @@ def train_models():
         ('preprocessor', preprocessor_m3),
         ('classifier', MultiOutputClassifier(
             RandomForestClassifier(
-                n_estimators=200,
+                n_estimators=150,
+                max_depth=12,
                 class_weight='balanced',
                 random_state=42,
                 n_jobs=1

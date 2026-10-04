@@ -15,6 +15,7 @@ import {
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend, Cell } from "recharts";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import modelMetrics from "@/data/model_metrics.json";
 
 interface AntibioticStat {
   drug: string;
@@ -108,7 +109,7 @@ const AntibiogramMatrix = () => {
           <div>
             <div className="inline-flex items-center gap-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 px-3.5 py-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400 mb-3">
               <Microscope className="h-3.5 w-3.5" />
-              <span>Real Hospital Antibiogram Surveillance • 315 Confirmed Cases</span>
+              <span>Real Hospital Antibiogram Surveillance • {modelMetrics.cohort.total_records} Confirmed Cases</span>
             </div>
             <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
               Institutional UTI Antibiogram Matrix

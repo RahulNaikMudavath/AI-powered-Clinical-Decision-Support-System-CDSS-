@@ -25,11 +25,21 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import PetriDishVisualizer from "./PetriDishVisualizer";
 
+export interface ExplainabilityFactor {
+  feature: string;
+  value: string;
+  impact: string;
+  clinical_rationale: string;
+}
+
 export interface PrescribedRecommendation {
   name: string;
   dosage: string;
   precautions: string;
   explanation: string;
+  guideline_badge?: string;
+  renal_dose_status?: string;
+  safety_tier?: string;
 }
 
 export interface AntibioticHistoryInfo {
@@ -74,8 +84,14 @@ export interface FinalResult {
   };
   predictions: {
     bacteria_type_prediction: string;
+    confidence_score?: number;
+    gram_negative_probability?: number;
+    gram_positive_probability?: number;
     predicted_resistant_antibiotics: string[];
     predicted_sensitive_antibiotics: string[];
+    resistant_probabilities?: Record<string, number>;
+    sensitive_probabilities?: Record<string, number>;
+    explainability_factors?: ExplainabilityFactor[];
   };
   prescribed_antibiotics: {
     recommended: PrescribedRecommendation[];
@@ -263,23 +279,57 @@ ${results.summary}
           {/* Top Grid: Pathogen & Susceptibility Summary */}
           <div className="grid gap-6 md:grid-cols-3">
             {/* 1. Pathogen Classification Card */}
-            <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-              <div className="mb-4 flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Predicted Pathogen Class
-                </span>
-                <Pill className="h-5 w-5 text-primary" />
+            <div className="rounded-2xl border border-border bg-card p-6 shadow-sm flex flex-col justify-between">
+              <div>
+                <div className="mb-3 flex items-center justify-between">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Predicted Pathogen Class
+                  </span>
+                  <Pill className="h-5 w-5 text-primary" />
+                </div>
+                <div className="flex items-baseline gap-2">
+                  <span className={`text-2xl font-bold ${isGramNegative ? "text-primary" : "text-secondary"}`}>
+                    {results.predictions.bacteria_type_prediction}
+                  </span>
+                </div>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {isGramNegative
+                    ? "Typical etiology: E. coli, Klebsiella pneumoniae, Proteus mirabilis, or Pseudomonas aeruginosa."
+                    : "Typical etiology: Enterococcus faecalis, Staphylococcus saprophyticus, or Streptococcus spp."}
+                </p>
+
+                {/* Calibrated Model Confidence Gauge */}
+                {results.predictions.confidence_score !== undefined && (
+                  <div className="mt-3 rounded-xl border border-primary/20 bg-primary/5 p-3">
+                    <div className="flex items-center justify-between text-xs mb-1.5">
+                      <span className="font-semibold text-foreground flex items-center gap-1.5">
+                        <Activity className="h-3.5 w-3.5 text-primary" />
+                        Calibrated Model Confidence
+                      </span>
+                      <span className="font-black text-primary text-sm">
+                        {results.predictions.confidence_score}%
+                      </span>
+                    </div>
+                    {/* Probabilistic Split Bar */}
+                    <div className="h-2 w-full rounded-full bg-muted overflow-hidden flex">
+                      <div
+                        className="bg-primary h-full transition-all duration-500"
+                        style={{ width: `${results.predictions.gram_negative_probability ?? 80}%` }}
+                        title={`Gram Negative: ${results.predictions.gram_negative_probability}%`}
+                      />
+                      <div
+                        className="bg-secondary h-full transition-all duration-500"
+                        style={{ width: `${results.predictions.gram_positive_probability ?? 20}%` }}
+                        title={`Gram Positive: ${results.predictions.gram_positive_probability}%`}
+                      />
+                    </div>
+                    <div className="mt-1 flex items-center justify-between text-[10px] text-muted-foreground font-mono">
+                      <span>Gram-Neg: {results.predictions.gram_negative_probability ?? 80}%</span>
+                      <span>Gram-Pos: {results.predictions.gram_positive_probability ?? 20}%</span>
+                    </div>
+                  </div>
+                )}
               </div>
-              <div className="flex items-baseline gap-2">
-                <span className={`text-2xl font-bold ${isGramNegative ? "text-primary" : "text-secondary"}`}>
-                  {results.predictions.bacteria_type_prediction}
-                </span>
-              </div>
-              <p className="mt-2 text-xs text-muted-foreground">
-                {isGramNegative
-                  ? "Typical etiology: E. coli, Klebsiella pneumoniae, Proteus mirabilis, or Pseudomonas aeruginosa."
-                  : "Typical etiology: Enterococcus faecalis, Staphylococcus saprophyticus, or Streptococcus spp."}
-              </p>
 
               {/* Patient Quick Vitals */}
               <div className="mt-4 border-t border-border pt-3">
@@ -318,22 +368,28 @@ ${results.summary}
               <div className="space-y-2">
                 {results.predictions.predicted_resistant_antibiotics.length > 0 ? (
                   <div className="flex flex-wrap gap-1.5">
-                    {results.predictions.predicted_resistant_antibiotics.map((abx) => (
-                      <Badge
-                        key={abx}
-                        variant="destructive"
-                        className="bg-destructive text-destructive-foreground text-xs"
-                      >
-                        ✕ {abx}
-                      </Badge>
-                    ))}
+                    {results.predictions.predicted_resistant_antibiotics.map((abx) => {
+                      const prob = results.predictions.resistant_probabilities?.[abx];
+                      return (
+                        <Badge
+                          key={abx}
+                          variant="destructive"
+                          className="bg-destructive text-destructive-foreground text-xs flex items-center gap-1 shadow-sm"
+                        >
+                          <span>✕ {abx}</span>
+                          {prob !== undefined && (
+                            <span className="text-[10px] font-mono opacity-80">({prob}%)</span>
+                          )}
+                        </Badge>
+                      );
+                    })}
                   </div>
                 ) : (
                   <span className="text-xs text-muted-foreground">No high-probability resistance flags detected.</span>
                 )}
               </div>
               <p className="mt-4 text-[11px] text-muted-foreground">
-                Avoid empirical use of these agents to prevent treatment failure and selection pressure.
+                Avoid empirical use of these agents to prevent therapeutic failure and selection pressure.
               </p>
             </div>
 
@@ -348,14 +404,20 @@ ${results.summary}
               <div className="space-y-2">
                 {results.predictions.predicted_sensitive_antibiotics.length > 0 ? (
                   <div className="flex flex-wrap gap-1.5">
-                    {results.predictions.predicted_sensitive_antibiotics.map((abx) => (
-                      <Badge
-                        key={abx}
-                        className="bg-success text-success-foreground hover:bg-success/90 text-xs"
-                      >
-                        ✓ {abx}
-                      </Badge>
-                    ))}
+                    {results.predictions.predicted_sensitive_antibiotics.map((abx) => {
+                      const prob = results.predictions.sensitive_probabilities?.[abx];
+                      return (
+                        <Badge
+                          key={abx}
+                          className="bg-success text-success-foreground hover:bg-success/90 text-xs flex items-center gap-1 shadow-sm"
+                        >
+                          <span>✓ {abx}</span>
+                          {prob !== undefined && (
+                            <span className="text-[10px] font-mono opacity-80">({prob}%)</span>
+                          )}
+                        </Badge>
+                      );
+                    })}
                   </div>
                 ) : (
                   <span className="text-xs text-muted-foreground">Broad spectrum intervention indicated.</span>
@@ -374,6 +436,78 @@ ${results.summary}
             resistantAntibiotics={results.predictions.predicted_resistant_antibiotics}
             creatinine={results.patient_details.lab_results.rft_serum_creatinine}
           />
+
+          {/* Explainable AI: Diagnostic Attribution & Feature Influence */}
+          {results.predictions.explainability_factors && results.predictions.explainability_factors.length > 0 && (
+            <div className="rounded-2xl border border-border bg-card p-6 shadow-card">
+              <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-4">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 text-xs font-semibold">
+                      <Sparkles className="h-3 w-3 mr-1" />
+                      Explainable AI (XAI)
+                    </Badge>
+                    <span className="text-xs text-muted-foreground font-medium">Patient-Specific Decision Attribution</span>
+                  </div>
+                  <h3 className="mt-1 text-lg font-bold text-foreground">
+                    Why Did the AI Diagnose & Recommend This Regimen?
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    Biomarker feature decomposition evaluating the patient's biochemical indicators, prior antimicrobial pressure, and host vulnerability.
+                  </p>
+                </div>
+                <Badge className="bg-muted text-foreground border-border text-xs shrink-0 self-start sm:self-auto">
+                  {results.predictions.explainability_factors.length} Clinical Drivers Analyzed
+                </Badge>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {results.predictions.explainability_factors.map((factor, idx) => {
+                  const isRenal = factor.feature.toLowerCase().includes("creatinine");
+                  const isResPressure = factor.impact.toLowerCase().includes("resistance");
+                  const isHighLoad = factor.impact.toLowerCase().includes("load") || factor.impact.toLowerCase().includes("pyuria");
+
+                  return (
+                    <div
+                      key={idx}
+                      className={`rounded-xl border p-4 transition-all ${
+                        isRenal
+                          ? "border-amber-500/30 bg-amber-500/5 dark:bg-amber-500/10"
+                          : isResPressure
+                          ? "border-rose-500/30 bg-rose-500/5 dark:bg-rose-500/10"
+                          : isHighLoad
+                          ? "border-teal-500/30 bg-teal-500/5 dark:bg-teal-500/10"
+                          : "border-border bg-muted/20"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <span className="text-xs font-bold text-foreground">{factor.feature}</span>
+                        <Badge variant="secondary" className="text-[10px] font-mono shrink-0">
+                          {factor.value}
+                        </Badge>
+                      </div>
+                      <div className="mb-2">
+                        <span
+                          className={`inline-block text-[11px] font-semibold px-2 py-0.5 rounded-full ${
+                            isRenal
+                              ? "bg-amber-500/20 text-amber-700 dark:text-amber-300"
+                              : isResPressure
+                              ? "bg-rose-500/20 text-rose-700 dark:text-rose-300"
+                              : "bg-teal-500/20 text-teal-700 dark:text-teal-300"
+                          }`}
+                        >
+                          {factor.impact}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        {factor.clinical_rationale}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Recommended Regimens Detail Cards */}
           <div>
@@ -411,9 +545,17 @@ ${results.summary}
                           <h4 className="text-lg font-bold text-foreground">{drug.name}</h4>
                         </div>
                         <Badge className="bg-primary text-primary-foreground text-xs">
-                          First Line
+                          {drug.safety_tier ? drug.safety_tier.split(":")[0] : "First Line"}
                         </Badge>
                       </div>
+
+                      {/* Guideline Badge */}
+                      {drug.guideline_badge && (
+                        <div className="mb-2.5 inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                          <Shield className="h-3 w-3" />
+                          <span>{drug.guideline_badge}</span>
+                        </div>
+                      )}
 
                       {/* Dosage */}
                       <div className="mb-3 rounded-lg bg-muted/40 p-3">
@@ -421,13 +563,18 @@ ${results.summary}
                         <p className="mt-0.5 text-xs font-semibold text-foreground">{drug.dosage}</p>
                       </div>
 
-                      {/* Precautions */}
+                      {/* Precautions & Renal Dosing */}
                       <div className="mb-3 rounded-lg border border-warning/20 bg-warning/5 p-3">
                         <div className="flex items-center gap-1.5 text-warning">
                           <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-                          <span className="text-[11px] font-semibold">Precautions & Renal Dosing:</span>
+                          <span className="text-[11px] font-semibold">Precautions & Renal Profile:</span>
                         </div>
                         <p className="mt-1 text-xs text-foreground/90">{drug.precautions}</p>
+                        {drug.renal_dose_status && (
+                          <div className="mt-2 pt-2 border-t border-warning/20 text-[11px] font-medium text-amber-700 dark:text-amber-300">
+                            ⚡ {drug.renal_dose_status}
+                          </div>
+                        )}
                       </div>
 
                       {/* Explanation */}

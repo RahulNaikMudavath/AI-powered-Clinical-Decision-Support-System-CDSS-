@@ -37,6 +37,7 @@ ABX_MAP = {
     'cefazolin': 'Cefazolin',
     'cefperazone-sulbactum': 'Cefoperazone-Sulbactam',
     'cefoperazone, sulbactum': 'Cefoperazone-Sulbactam',
+    'cefoperazone-sulbactam': 'Cefoperazone-Sulbactam',
     'cefaperazone-sulbactum': 'Cefoperazone-Sulbactam',
     'cefperazone+sulbactum': 'Cefoperazone-Sulbactam',
     'piperacillin-tazobactum': 'Piperacillin-Tazobactam',
@@ -78,15 +79,29 @@ ABX_MAP = {
     'clavulanic acid': 'Amoxicillin-Clavulanate',
     'clavulanate': 'Amoxicillin-Clavulanate',
     'cefalexin': 'Cefalexin',
+    # Class mappings for Sheet 3
+    'quinolones': 'Ciprofloxacin',
+    'fluoroquinolones': 'Ciprofloxacin',
+    'cephalosporins': 'Ceftriaxone',
+    'cephalosprins': 'Ceftriaxone',
+    'macrolides': 'Azithromycin',
+    'penicillins': 'Ampicillin',
+    'extendedspectrumpenicillins': 'Piperacillin-Tazobactam',
+    'aminoglycosides': 'Amikacin',
+    'carbapenems': 'Meropenem',
 }
 
 PATHOGEN_MAP = {
     'e.coli': ('Escherichia coli', 'Gram Negative'),
     'e,coli': ('Escherichia coli', 'Gram Negative'),
     'escherichia coli': ('Escherichia coli', 'Gram Negative'),
+    'escherichiacoli': ('Escherichia coli', 'Gram Negative'),
+    'eschirichia coli': ('Escherichia coli', 'Gram Negative'),
     'klebsiella pneumoniae': ('Klebsiella pneumoniae', 'Gram Negative'),
     'klebsiella pneumonia': ('Klebsiella pneumoniae', 'Gram Negative'),
     'klebsiellapneumoniae': ('Klebsiella pneumoniae', 'Gram Negative'),
+    'klebsellapneumoniae': ('Klebsiella pneumoniae', 'Gram Negative'),
+    'klebsellapneumonia': ('Klebsiella pneumoniae', 'Gram Negative'),
     'klebsiella species': ('Klebsiella pneumoniae', 'Gram Negative'),
     'klenbsiella': ('Klebsiella pneumoniae', 'Gram Negative'),
     'klebsiella': ('Klebsiella pneumoniae', 'Gram Negative'),
@@ -98,31 +113,36 @@ PATHOGEN_MAP = {
     'pseudomonas': ('Pseudomonas aeruginosa', 'Gram Negative'),
     'staphylococcus saprophyticus': ('Staphylococcus saprophyticus', 'Gram Positive'),
     'staphylococcus aureus': ('Staphylococcus aureus', 'Gram Positive'),
+    'staphylococcusaureus': ('Staphylococcus aureus', 'Gram Positive'),
     'staphylococusaures': ('Staphylococcus aureus', 'Gram Positive'),
     'staphylococus pneumoniae': ('Streptococcus pneumoniae', 'Gram Positive'),
+    'streptococcus pneumoniae': ('Streptococcus pneumoniae', 'Gram Positive'),
+    'streptococcuspneumoniae': ('Streptococcus pneumoniae', 'Gram Positive'),
+    'streptococcus.pneumoniae': ('Streptococcus pneumoniae', 'Gram Positive'),
     'enterococcus faecalis': ('Enterococcus faecalis', 'Gram Positive'),
     'enterococcus': ('Enterococcus faecalis', 'Gram Positive'),
     'enterobacter cloacae': ('Enterobacter cloacae', 'Gram Negative'),
     'enterobacter': ('Enterobacter cloacae', 'Gram Negative'),
     'streptococcus agalactiae': ('Streptococcus agalactiae', 'Gram Positive'),
-    'streptococcus pneumoniae': ('Streptococcus pneumoniae', 'Gram Positive'),
     'acinetobacter baumannii': ('Acinetobacter baumannii', 'Gram Negative'),
     'acinetobacterbaumanii': ('Acinetobacter baumannii', 'Gram Negative'),
     'acinetobacter species': ('Acinetobacter baumannii', 'Gram Negative'),
+    'acinetobacterspecies': ('Acinetobacter baumannii', 'Gram Negative'),
     'citrobacter freundii': ('Citrobacter freundii', 'Gram Negative'),
     'citrobacter species': ('Citrobacter freundii', 'Gram Negative'),
+    'citrobacterspecies': ('Citrobacter freundii', 'Gram Negative'),
     'morganella morganii': ('Morganella morganii', 'Gram Negative'),
     'proteus mirabilis': ('Proteus mirabilis', 'Gram Negative'),
     'proteus vulgaris': ('Proteus vulgaris', 'Gram Negative'),
     'candida albicans': ('Candida albicans', 'Fungi'),
     'candida species isolated': ('Candida albicans', 'Fungi'),
+    'candidaspecies': ('Candida albicans', 'Fungi'),
     'coagulase negative staphylococcus': ('Coagulase-negative Staphylococcus', 'Gram Positive'),
     'no bacterial growth': ('No Bacterial Growth', 'Unknown'),
     'nil': ('No Bacterial Growth', 'Unknown'),
 }
 
 def normalize_abx_list(raw_list):
-    """Takes a list of strings (which could be single or comma/semicolon delimited) and returns sorted unique standardized names."""
     res = set()
     for item in raw_list:
         if not item or str(item).strip().lower() in ['nil', 'no', 'none', '']:
@@ -132,10 +152,8 @@ def normalize_abx_list(raw_list):
             p_clean = p.strip().lower()
             if not p_clean or p_clean in ['nil', 'no', 'none']:
                 continue
-            # Look up in map
             matched = ABX_MAP.get(p_clean)
             if not matched:
-                # partial matching
                 for k, v in ABX_MAP.items():
                     if k in p_clean:
                         matched = v
@@ -153,9 +171,7 @@ def clean_range(val):
     if '-' in s:
         parts = s.split('-')
         try:
-            p0 = float(parts[0])
-            p1 = float(parts[1])
-            return (p0 + p1) / 2.0
+            return (float(parts[0]) + float(parts[1])) / 2.0
         except:
             pass
     try:
@@ -170,16 +186,11 @@ def clean_protein(val):
     if not val or str(val).strip().lower() in ['nil', 'none', 'nan', 'negative', '']:
         return 'Negative'
     s = str(val).strip().lower()
-    if 'trace' in s or 'tr' in s:
-        return 'Trace'
-    if '4' in s or '++++' in s:
-        return '4+'
-    if '3' in s or '+++' in s:
-        return '3+'
-    if '2' in s or '++' in s:
-        return '2+'
-    if '1' in s or '+' in s:
-        return '1+'
+    if 'trace' in s or 'tr' in s: return 'Trace'
+    if '4' in s or '++++' in s: return '4+'
+    if '3' in s or '+++' in s: return '3+'
+    if '2' in s or '++' in s: return '2+'
+    if '1' in s or '+' in s: return '1+'
     return 'Negative'
 
 def clean_num(val):
@@ -196,76 +207,53 @@ def clean_num(val):
 
 def clean_gender(val):
     s = str(val).strip().lower()
-    if 'f' in s:
-        return 'Female'
-    if 'm' in s:
-        return 'Male'
+    if 'f' in s: return 'Female'
+    if 'm' in s: return 'Male'
     return 'Female'
 
 def clean_department(val):
     s = str(val).strip().lower()
-    if 'nephro' in s:
-        return 'Nephrology'
-    if 'general med' in s or 'internal' in s:
-        return 'General Medicine'
-    if 'obg' in s or 'gynecol' in s or 'obstet' in s:
-        return 'Obstetrics & Gynecology'
-    if 'pedia' in s:
-        return 'Pediatrics'
-    if 'icu' in s:
-        return 'ICU'
-    if 'emerg' in s:
-        return 'Emergency Medicine'
-    if 'geriat' in s:
-        return 'Geriatrics'
-    if 'surg' in s:
-        return 'General Surgery'
-    if 'uro' in s:
-        return 'Urology'
-    return 'Nephrology'
+    if 'nephro' in s: return 'Nephrology'
+    if 'general med' in s or 'internal' in s or 'medicine' in s: return 'General Medicine'
+    if 'obg' in s or 'gynecol' in s or 'obstet' in s: return 'Obstetrics & Gynecology'
+    if 'pedia' in s or 'nicu' in s: return 'Pediatrics'
+    if 'icu' in s: return 'ICU'
+    if 'emerg' in s: return 'Emergency Medicine'
+    if 'geriat' in s: return 'Geriatrics'
+    if 'surg' in s: return 'General Surgery'
+    if 'uro' in s: return 'Urology'
+    if 'pulmo' in s: return 'Pulmonology'
+    return 'General Medicine'
 
 def clean_classification(val):
     s = str(val).strip().lower()
-    if 'cauti' in s or 'catheter' in s:
-        return 'Catheter-Associated UTI (CAUTI)'
-    if 'hospital' in s or 'nosocomial' in s:
-        return 'Hospital-Acquired UTI'
-    if 'recurrent' in s:
-        return 'Recurrent UTI'
-    if 'uncomplicated' in s:
-        return 'Uncomplicated UTI'
-    if 'complicated' in s:
-        return 'Complicated UTI'
+    if 'cauti' in s or 'catheter' in s: return 'Catheter-Associated UTI (CAUTI)'
+    if 'hospital' in s or 'nosocomial' in s: return 'Hospital-Acquired UTI'
+    if 'recurrent' in s: return 'Recurrent UTI'
+    if 'uncomplicated' in s: return 'Uncomplicated UTI'
+    if 'complicated' in s: return 'Complicated UTI'
     return 'Complicated UTI'
 
 def clean_type_of_uti(val):
     s = str(val).strip().lower()
-    if 'cystitis' in s or 'urethritis' in s or 'lower' in s:
-        return 'Cystitis'
-    if 'pyelo' in s or 'upper' in s:
-        return 'Pyelonephritis'
-    if 'urosepsis' in s or 'sepsis' in s:
-        return 'Urosepsis'
-    if 'asymptomatic' in s:
-        return 'Asymptomatic Bacteriuria'
+    if 'cystitis' in s or 'urethritis' in s or 'lower' in s: return 'Cystitis'
+    if 'pyelo' in s or 'upper' in s: return 'Pyelonephritis'
+    if 'urosepsis' in s or 'sepsis' in s: return 'Urosepsis'
+    if 'asymptomatic' in s: return 'Asymptomatic Bacteriuria'
     return 'Cystitis'
 
 def clean_site(val):
     s = str(val).strip().lower()
-    if 'upper' in s:
-        return 'Upper urinary tract'
+    if 'upper' in s: return 'Upper urinary tract'
     return 'Lower urinary tract'
 
 def clean_sample(val):
     s = str(val).strip().lower()
-    if 'urine' in s:
-        return 'Urine'
-    if 'blood' in s:
-        return 'Blood'
-    if 'pus' in s:
-        return 'Pus'
-    if 'swab' in s:
-        return 'Swab'
+    if 'urine' in s: return 'Urine'
+    if 'blood' in s: return 'Blood'
+    if 'pus' in s: return 'Pus'
+    if 'sputum' in s: return 'Sputum'
+    if 'swab' in s: return 'Swab'
     return 'Urine'
 
 def build_dataset():
@@ -300,19 +288,18 @@ def build_dataset():
                 parsed.append(row_dict)
             return parsed
 
-        s2_rows = parse_sheet_rows('xl/worksheets/sheet2.xml')
         s1_rows = parse_sheet_rows('xl/worksheets/sheet1.xml')
+        s2_rows = parse_sheet_rows('xl/worksheets/sheet2.xml')
+        s3_rows = parse_sheet_rows('xl/worksheets/sheet3.xml')
 
-    print(f"Parsing Sheet 2 ({len(s2_rows)} rows)...")
-    records = []
-    curr = None
-
+    print(f"Parsing Sheet 2: Nephrology Data ({len(s2_rows)} rows)...")
+    s2_records = []
+    curr2 = None
     for r_idx in range(1, len(s2_rows)):
         row = s2_rows[r_idx]
         s_no = row.get('A', '')
         age = row.get('B', '')
         gender = row.get('C', '')
-
         is_new = False
         if s_no and (s_no.isdigit() or s_no.replace('.', '').isdigit()):
             is_new = True
@@ -320,9 +307,8 @@ def build_dataset():
             is_new = True
 
         if is_new:
-            if curr:
-                records.append(curr)
-            curr = {
+            if curr2: s2_records.append(curr2)
+            curr2 = {
                 'SOURCE': 'Sheet2_Nephrology',
                 'AGE': clean_num(age),
                 'GENDER': clean_gender(gender),
@@ -355,18 +341,15 @@ def build_dataset():
                 'RBC': clean_range(row.get('AK', ''))
             }
         else:
-            if curr:
-                if row.get('Q'): curr['RAW_RESISTANT'].append(row.get('Q'))
-                if row.get('R'): curr['RAW_PREV_ABX'].append(row.get('R'))
-                if row.get('S'): curr['RAW_SENSITIVE'].append(row.get('S'))
-
-    if curr:
-        records.append(curr)
-
-    print(f"Extracted {len(records)} patients from Sheet 2.")
+            if curr2:
+                if row.get('Q'): curr2['RAW_RESISTANT'].append(row.get('Q'))
+                if row.get('R'): curr2['RAW_PREV_ABX'].append(row.get('R'))
+                if row.get('S'): curr2['RAW_SENSITIVE'].append(row.get('S'))
+    if curr2: s2_records.append(curr2)
+    print(f"Extracted {len(s2_records)} patients from Sheet 2.")
 
     # Parse Sheet 1
-    print(f"Parsing Sheet 1 ({len(s1_rows)} rows)...")
+    print(f"Parsing Sheet 1: 30 Cases of Nephro ({len(s1_rows)} rows)...")
     s1_records = []
     curr1 = None
     for r_idx in range(1, len(s1_rows)):
@@ -421,46 +404,106 @@ def build_dataset():
     if curr1: s1_records.append(curr1)
     print(f"Extracted {len(s1_records)} patients from Sheet 1.")
 
-    all_records = records + s1_records
-    print(f"Total merged clinical records: {len(all_records)}")
+    # Parse Sheet 3: Over All Hospital Data
+    print(f"Parsing Sheet 3: Over All Hospital Data ({len(s3_rows)} rows)...")
+    s3_records = []
+    # Sheet 3 has 1 row per patient
+    for r_idx in range(1, len(s3_rows)):
+        row = s3_rows[r_idx]
+        p_id = row.get('A', '')
+        age = row.get('B', '')
+        gender = row.get('C', '')
+        if not age or not (clean_num(age) > 0):
+            continue
 
-    # Process and Standardize Pathogens, Bacteria, and Antibiotic lists
+        raw_sample = row.get('H', '')
+        raw_organism = row.get('K', '')
+        raw_res = row.get('L', '')
+        empirical = row.get('M', '')
+        change_abx = row.get('N', '')
+        prev_abx = row.get('I', '')
+
+        # Build sensitive list from empirical + change
+        sens_items = []
+        if empirical and empirical.lower() != 'nil': sens_items.append(empirical)
+        if change_abx and change_abx.lower() != 'nil': sens_items.append(change_abx)
+
+        diagnosis = row.get('E', '').strip()
+        is_uti = 'uti' in diagnosis.lower() or 'urine' in raw_sample.lower()
+        
+        s3_records.append({
+            'SOURCE': 'Sheet3_OverAll',
+            'AGE': clean_num(age),
+            'GENDER': clean_gender(gender),
+            'DEPARTMENT': clean_department(row.get('D', '')),
+            'CHIEF_COMPLAINTS': diagnosis,
+            'COMORBIDITIES': row.get('F', '').strip(),
+            'RISKFACTORS': row.get('G', '').strip(),
+            'SURGICAL_HISTORY': '',
+            'SOCIAL_HISTORY': '',
+            'DIAGNOSIS': diagnosis or ('Complicated UTI' if is_uti else 'Hospital Infection'),
+            'CLASSIFICATION_OF_UTI': 'Complicated UTI' if is_uti else 'Hospital-Acquired Infection',
+            'TYPE_OF_UTI': clean_type_of_uti(diagnosis) if is_uti else 'Systemic / Respiratory',
+            'SITE_OF_INFECTION': 'Urinary tract' if is_uti else ('Respiratory tract' if 'sputum' in raw_sample.lower() else 'Systemic'),
+            'TYPE_OF_SAMPLE': clean_sample(raw_sample),
+            'RAW_PATHOGEN': raw_organism,
+            'RAW_BACTERIA': '',
+            'RAW_RESISTANT': [raw_res] if raw_res else [],
+            'RAW_PREV_ABX': [prev_abx] if prev_abx else [],
+            'RAW_SENSITIVE': sens_items,
+            'CBP_LYMPHOCYTES': np.nan,
+            'WBC': clean_num(row.get('O', '')),
+            'POLYMORPHS': np.nan,
+            'CRP': np.nan,
+            'RFT_SERUM_CREATININE': clean_num(row.get('Y', '')),
+            'SERUM_URIC_ACID': clean_num(row.get('Z', '')),
+            'BLOOD_UREA': clean_num(row.get('X', '')),
+            'CUE_PUS_CELLS': np.nan,
+            'EPITHELIAL_CELLS': np.nan,
+            'PROTEINS': clean_protein(row.get('V', '')),
+            'RBC': np.nan
+        })
+    print(f"Extracted {len(s3_records)} patients from Sheet 3.")
+
+    all_records = s2_records + s1_records + s3_records
+    print(f"\nTotal combined clinical records across all 3 sheets: {len(all_records)}")
+
+    # Standardize Pathogens, Bacteria, and Antibiotic lists
     final_rows = []
     for r in all_records:
         res_list = normalize_abx_list(r['RAW_RESISTANT'])
         sens_list = normalize_abx_list(r['RAW_SENSITIVE'])
         prev_list = normalize_abx_list(r['RAW_PREV_ABX'])
 
-        # Microbiological Mutual Exclusivity:
-        # If an agent was tested both resistant and sensitive, resistant takes precedence for clinical safety
+        # Mutual exclusivity: Resistant supersedes Sensitive
         clean_sens = [abx for abx in sens_list if abx not in res_list]
 
         # Pathogen resolution
-        raw_pat = (r['RAW_PATHOGEN'] or '').lower().strip()
+        raw_pat = (r['RAW_PATHOGEN'] or '').lower().replace(' ', '').replace('.', '').replace('_', '').strip()
         raw_bac = (r['RAW_BACTERIA'] or '').lower().strip()
 
-        if raw_pat in PATHOGEN_MAP:
-            pat_name, bac_type = PATHOGEN_MAP[raw_pat]
-        else:
-            pat_name, bac_type = None, None
-            for k, (name, btype) in PATHOGEN_MAP.items():
-                if k in raw_pat and k != 'nil':
-                    pat_name, bac_type = name, btype
-                    break
+        pat_name, bac_type = None, None
+        for k, (name, btype) in PATHOGEN_MAP.items():
+            k_clean = k.replace(' ', '').replace('.', '').replace('_', '')
+            if k_clean in raw_pat and k != 'nil':
+                pat_name, bac_type = name, btype
+                break
 
         if not pat_name:
-            if not res_list and not clean_sens:
+            if not res_list and not clean_sens and (not r['RAW_PATHOGEN'] or 'nil' in r['RAW_PATHOGEN'].lower() or 'no' in r['RAW_PATHOGEN'].lower()):
                 pat_name = 'No Bacterial Growth'
                 bac_type = 'Unknown'
             else:
-                if 'positive' in raw_bac:
+                if 'streptococc' in raw_pat or 'staphylococc' in raw_pat or 'positive' in raw_bac:
                     pat_name = 'Unspecified Gram-Positive Cocci'
                     bac_type = 'Gram Positive'
-                else:
+                elif 'coli' in raw_pat or 'klebs' in raw_pat or 'pseudom' in raw_pat or 'negative' in raw_bac:
                     pat_name = 'Unspecified Gram-Negative Bacilli'
                     bac_type = 'Gram Negative'
+                elif pat_name is None and r['RAW_PATHOGEN']:
+                    pat_name = r['RAW_PATHOGEN'].strip().title()
+                    bac_type = 'Gram Negative'
 
-        # Double check bacteria type if raw bacteria was explicitly specified
         if 'positive' in raw_bac:
             bac_type = 'Gram Positive'
         elif 'negative' in raw_bac:
@@ -499,19 +542,17 @@ def build_dataset():
         })
 
     df = pd.DataFrame(final_rows)
-    print(f"\nFinal cleaned dataset shape: {df.shape}")
-    print(f"Bacteria distribution:\n{df['TYPE_OF_BACTERIA'].value_counts()}")
-    print(f"\nTop 10 Organisms:\n{df['ORGANISM_NAME'].value_counts().head(10)}")
+    print(f"\nFinal combined cleaned dataset shape: {df.shape}")
+    print(f"Bacteria distribution:\n{df['TYPE_OF_BACTERIA'].value_counts(dropna=False)}")
+    print(f"\nTop 10 Organisms:\n{df['ORGANISM_NAME'].value_counts(dropna=False).head(10)}")
 
-    # Check non-empty antibiotic profiles
     has_res = (df['RESISTANT'].str.len() > 0).sum()
     has_sens = (df['SENSITIVE'].str.len() > 0).sum()
     print(f"\nPatients with resistant profile: {has_res}/{len(df)}")
     print(f"Patients with sensitive profile: {has_sens}/{len(df)}")
 
-    # Save to CSV
     df.to_csv(OUTPUT_CSV, index=False)
-    print(f"Saved cleaned dataset to: {OUTPUT_CSV}")
+    print(f"Saved merged dataset to: {OUTPUT_CSV}")
 
 if __name__ == '__main__':
     build_dataset()

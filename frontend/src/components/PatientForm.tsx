@@ -12,6 +12,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { ClipboardList, Sparkles, Send, TestTube, Activity, Stethoscope, AlertTriangle, CheckCircle2 } from "lucide-react";
+import modelMetrics from "@/data/model_metrics.json";
 
 export interface PatientData {
   AGE: number;
@@ -305,7 +306,7 @@ const PatientForm = ({ onSubmit, isLoading, selectedPresetKey }: PatientFormProp
             <div className="mb-3.5 flex items-center justify-between">
               <span className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-foreground">
                 <Sparkles className="h-3.5 w-3.5 text-primary" />
-                Quick Clinical Presets (Calibrated from 315 Inpatients)
+                Quick Clinical Presets (Calibrated from {modelMetrics.cohort.total_records} Inpatients)
               </span>
               <span className="text-xs text-muted-foreground hidden sm:inline">Click to instant-fill all 25 biomarkers</span>
             </div>
